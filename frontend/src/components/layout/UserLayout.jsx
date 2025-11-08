@@ -6,7 +6,7 @@ const UserLayout = () => {
   return (
     <div>
       <Topbar />
-      <main className="container mx-auto p-4">
+      <main className="container mx-auto px-4 py-3 md:p-4">
         <Outlet />
       </main>
     </div>

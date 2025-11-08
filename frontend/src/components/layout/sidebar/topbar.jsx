@@ -8,7 +8,7 @@ const Topbar = () => {
 
   return (
     <nav className="bg-white shadow-md">
-      <div className="container mx-auto flex items-center justify-between p-4">
+      <div className="container mx-auto flex items-center justify-between px-4 py-3 md:p-4">
         <NavLink to="/" className="text-2xl font-bold text-red-600">
           MooMoo
         </NavLink>

@@ -13,7 +13,7 @@ const AdminLayout = () => {
   return (
     <div>
       <nav className="bg-gray-800 text-white shadow-md">
-        <div className="container mx-auto flex items-center justify-between p-4">
+        <div className="container mx-auto flex items-center justify-between px-4 py-3 md:p-4">
           <div className="text-2xl font-bold">
             MooMoo Admin
           </div>
@@ -41,7 +41,7 @@ const AdminLayout = () => {
           </div>
         </div>
       </nav>
-      <main className="container mx-auto p-4">
+      <main className="container mx-auto px-4 py-3 md:p-4">
         <Outlet />
       </main>
     </div>

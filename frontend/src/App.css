@@ -4,3 +4,18 @@
 body {
   font-family: 'Sarabun', sans-serif;
 }
+
+/* Reduce base font-size slightly on small screens so Tailwind rem-based sizes scale down
+   This prevents the UI from appearing too large on mobile devices while keeping
+   desktop sizes unchanged. Adjust if you prefer a different scale. */
+@media (max-width: 640px) {
+  html {
+    font-size: 14px; /* default is 16px; 14px reduces size by ~12% on small screens */
+  }
+}
+
+@media (min-width: 641px) {
+  html {
+    font-size: 16px;
+  }
+}
