@@ -55,11 +55,26 @@ const Topbar = () => {
 
   // Menu items should not include the table info — render table info separately
   const menuItems = [
-    {
-      label: "Admin Panel",
-      path: "/admin",
-    },
+    // remove admin panel from customer topbar
   ];
+
+  const handleRequestBill = () => {
+    // For now show a confirmation — backend integration can be added later.
+    if (tableId) {
+      // Close menu on mobile
+      setMenuOpen(false);
+      window.alert('เรียกเช็คบิลแล้ว กรุณารอสักครู่');
+      // Optionally dispatch a custom event for other parts of the app to handle:
+      try {
+        window.dispatchEvent(new CustomEvent('moomoo:request-bill', { detail: { tableId } }));
+      } catch (e) {
+        // ignore
+      }
+    } else {
+      window.alert('ไม่พบหมายเลขโต๊ะสำหรับเรียกเช็คบิล');
+    }
+  };
+ 
 
   return (
     <nav className="bg-white shadow-md w-full z-50">
@@ -112,7 +127,7 @@ const Topbar = () => {
           <div className="pt-2 pb-4">
             {/* Show table info at top of mobile menu (separate from links) */}
               {showTableNumber && (
-                <div className="px-4 py-2 border-b border-gray-100">
+                <div className="px-4 py-2 border-b border-gray-100 flex flex-col items-center space-y-2">
                   <NavLink
                     to="/"
                     onClick={() => setMenuOpen(false)}
@@ -120,6 +135,13 @@ const Topbar = () => {
                   >
                     เปลี่ยนโต๊ะ
                   </NavLink>
+                  <button
+                    type="button"
+                    onClick={handleRequestBill}
+                    className="inline-block text-sm bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600"
+                  >
+                    เรียกเช็คบิล
+                  </button>
                 </div>
               )}
 
