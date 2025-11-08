@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 
 function OrderPage() {
@@ -6,14 +6,98 @@ function OrderPage() {
   const [cart, setCart] = useState([]);
   const [showNotification, setShowNotification] = useState(false);
 
-  // Mock menu data - replace with backend data later
-  const menu = useMemo(() => [
-    { id: 1, name: 'ข้าวผัดกะเพรา', price: 80 },
-    { id: 2, name: 'ต้มยำกุ้ง', price: 120 },
-    { id: 3, name: 'ส้มตำ', price: 70 },
-    { id: 4, name: 'ผัดซีอิ๊ว', price: 85 },
-    { id: 5, name: 'ไข่ดาว', price: 15 },
-  ], []);
+  // Menu state will be loaded depending on table price tier (259 or 299)
+  const [menu, setMenu] = useState({ free: [], special: [] });
+  const [tier, setTier] = useState(null); // 259 or 299
+  const [loadingMenu, setLoadingMenu] = useState(true);
+  const [menuError, setMenuError] = useState(null);
+
+  // Mock database functions
+  const mockDB = {
+    // table info: decide tier based on tableId for mock (odd=259, even=299)
+    getTableInfo: async (tableId) => {
+      // simulate latency
+      await new Promise((r) => setTimeout(r, 200));
+      const id = Number(tableId);
+      if (Number.isNaN(id)) throw new Error('Invalid table id');
+      return { tableId: id, tier: id % 2 === 0 ? 299 : 259 };
+    },
+    // menu by tier
+    getMenuByTier: async (tier) => {
+      await new Promise((r) => setTimeout(r, 200));
+      // Arrange mock data: start with price 259, then 299, then paid specials
+      const price259Included = [
+        { id: 201, name: 'หมูสไลซ์', price: 0, category: 'หมู' },
+        { id: 202, name: 'สามชั้น', price: 0, category: 'หมู' },
+        { id: 203, name: 'หมูหมักพิเศษ', price: 0, category: 'หมู' },
+        { id: 204, name: 'ลูกชิ้นรวม', price: 0, category: 'เครื่องเคียง' },
+        { id: 205, name: 'ผักสดรวม', price: 0, category: 'ผัก' },
+        { id: 206, name: 'ข้าวสวย', price: 0, category: 'พื้นฐาน' },
+        { id: 207, name: 'น้ำเปล่า', price: 0, category: 'เครื่องดื่ม' },
+        { id: 208, name: 'บะหมี่/เส้น', price: 0, category: 'เส้น' },
+        { id: 209, name: 'ไข่ไก่', price: 0, category: 'เครื่องเคียง' },
+        { id: 210, name: 'เต้าหู้ทอด', price: 0, category: 'เครื่องเคียง' },
+      ];
+
+      // extra premium items included in 299 (6 items)
+      const price299Extras = [
+        { id: 301, name: 'สันคอออสเตรเลีย', price: 0, category: 'หมู (พรีเมียม)' },
+        { id: 302, name: 'สันในวัวนุ่ม', price: 0, category: 'เนื้อ (พรีเมียม)' },
+        { id: 303, name: 'กุ้งแม่น้ำ (พรีเมียม)', price: 0, category: 'อาหารทะเล' },
+        { id: 304, name: 'หอยเชลล์', price: 0, category: 'อาหารทะเล' },
+        { id: 305, name: 'เบคอนรมควัน', price: 0, category: 'หมู (พรีเมียม)' },
+        { id: 306, name: 'เนื้อวากิว (พรีเมียม)', price: 0, category: 'เนื้อ (พรีเมียม)' },
+      ];
+
+      // paid special menu (can be ordered extra even if not included)
+      const paidSpecials = [
+        { id: 501, name: 'กุ้งสด (ชิ้น)', price: 80, category: 'อาหารทะเล' },
+        { id: 502, name: 'ปลาหมึก (ชิ้น)', price: 70, category: 'อาหารทะเล' },
+        { id: 503, name: 'เนื้อสไลซ์', price: 40, category: 'เนื้อ' },
+        { id: 504, name: 'บะหมี่พิเศษ', price: 30, category: 'เส้น' },
+        { id: 505, name: 'ไส้กรอกพรีเมียม', price: 60, category: 'เครื่องเคียง' },
+      ];
+
+      if (tier === 259) {
+        return {
+          free: price259Included,
+          special: paidSpecials,
+        };
+      }
+
+      if (tier === 299) {
+        return {
+          free: price259Included.concat(price299Extras), // 10 + 6 = 16 items
+          special: paidSpecials,
+        };
+      }
+
+      throw new Error('Unknown tier');
+    },
+  };
+
+  useEffect(() => {
+    let mounted = true;
+    setLoadingMenu(true);
+    setMenuError(null);
+    (async () => {
+      try {
+        const info = await mockDB.getTableInfo(tableId);
+        if (!mounted) return;
+        setTier(info.tier);
+        const m = await mockDB.getMenuByTier(info.tier);
+        if (!mounted) return;
+        setMenu(m);
+      } catch (e) {
+        if (!mounted) return;
+        setMenuError(e.message || 'Failed to load menu');
+      } finally {
+        if (!mounted) return;
+        setLoadingMenu(false);
+      }
+    })();
+    return () => { mounted = false; };
+  }, [tableId]);
 
   const addToCart = (item) => {
     setCart((prev) => {
@@ -61,15 +145,40 @@ function OrderPage() {
       <div className="space-y-6">
         <div>
           <h2 className="text-lg font-semibold mb-4">เมนูอาหาร</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {menu.map((m) => (
-              <div key={m.id} className="border rounded p-3 bg-white">
-                <div className="font-semibold mb-1">{m.name}</div>
-                <div className="text-sm text-gray-600 mb-3">฿{m.price}</div>
-                <button onClick={() => addToCart(m)} className="bg-red-600 text-white px-3 py-1 rounded text-sm">เพิ่ม</button>
+          {loadingMenu ? (
+            <div className="text-gray-600">กำลังโหลดเมนู...</div>
+          ) : menuError ? (
+            <div className="text-red-500">เกิดข้อผิดพลาด: {menuError}</div>
+          ) : (
+            <div className="grid grid-cols-1 gap-6">
+              <div>
+                <h3 className="text-md font-semibold mb-2">ฟรี (แพ็กเกจ ฿{tier})</h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {menu.free.map((m) => (
+                    <div key={m.id} className="border rounded p-3 bg-white">
+                      <div className="font-semibold mb-1">{m.name}</div>
+                      <div className="text-sm text-gray-600 mb-3">ฟรี</div>
+                      <button onClick={() => addToCart(m)} className="bg-green-600 text-white px-3 py-1 rounded text-sm">เพิ่ม</button>
+                    </div>
+                  ))}
+                </div>
               </div>
-            ))}
-          </div>
+
+              <div>
+                <h3 className="text-md font-semibold mb-2">เมนูพิเศษ (จ่ายเงิน)</h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {menu.special.map((m) => (
+                    <div key={m.id} className="border rounded p-3 bg-white">
+                      <div className="font-semibold mb-1">{m.name}</div>
+                      {m.category && <div className="text-xs text-gray-400 mb-1">{m.category}</div>}
+                      <div className="text-sm text-gray-600 mb-3">{m.price > 0 ? `฿${m.price}` : 'ฟรี'}</div>
+                      <button onClick={() => addToCart(m)} className={`px-3 py-1 rounded text-sm ${m.price>0 ? 'bg-red-600 text-white' : 'bg-green-600 text-white'}`}>เพิ่ม</button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="bg-red-50 rounded-lg p-4">
