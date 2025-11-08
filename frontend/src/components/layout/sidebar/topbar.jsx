@@ -47,10 +47,11 @@ const NavItem = ({ item, depth = 0, closeMenu }) => {
 
 const Topbar = () => {
   const location = useLocation();
-  // show table number only when URL is exactly "/:tableId" (single numeric segment)
+  // detect if any path segment is a numeric table id (e.g. /5 or /5/order)
   const pathSegments = location.pathname.split('/').filter(Boolean);
-  const showTableNumber = pathSegments.length === 1 && !isNaN(pathSegments[0]);
-  const tableId = showTableNumber ? pathSegments[0] : null;
+  const numericIndex = pathSegments.findIndex((s) => !isNaN(s));
+  const hasTableInPath = numericIndex !== -1;
+  const tableId = hasTableInPath ? pathSegments[numericIndex] : null;
   const [menuOpen, setMenuOpen] = useState(false);
 
   // Menu items should not include the table info — render table info separately
@@ -85,13 +86,22 @@ const Topbar = () => {
 
         {/* Desktop menu */}
         <div className="hidden md:flex items-center space-x-6 text-base">
-          {showTableNumber && (
+          {hasTableInPath && (
             <NavLink
               to="/"
               className="text-red-600 hover:bg-red-100/30 px-3 py-2 rounded-md transition-colors duration-200 text-sm"
             >
               เปลี่ยนโต๊ะ
             </NavLink>
+          )}
+          {hasTableInPath && (
+            <button
+              type="button"
+              onClick={handleRequestBill}
+              className="bg-yellow-500 text-white px-3 py-2 rounded-md hover:bg-yellow-600 transition-colors duration-200 text-sm"
+            >
+              เรียกเช็คบิล
+            </button>
           )}
           {menuItems.map((item, idx) => (
             <div key={idx} className="relative group">
@@ -105,20 +115,22 @@ const Topbar = () => {
           ))}
         </div>
 
-        {/* Hamburger (mobile) */}
-        <div className="md:hidden">
-          <button
-            aria-label="Toggle menu"
-            onClick={() => setMenuOpen(!menuOpen)}
-            className="p-2 rounded text-gray-700 hover:text-red-600"
-          >
-            {menuOpen ? (
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 6L18 18M6 18L18 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-            ) : (
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 6H20M4 12H20M4 18H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-            )}
-          </button>
-        </div>
+  {/* Hamburger (mobile) - only show when a table is present */}
+  {hasTableInPath && (
+          <div className="md:hidden">
+            <button
+              aria-label="Toggle menu"
+              onClick={() => setMenuOpen(!menuOpen)}
+              className="p-2 rounded text-gray-700 hover:text-red-600"
+            >
+              {menuOpen ? (
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 6L18 18M6 18L18 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              ) : (
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 6H20M4 12H20M4 18H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              )}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Mobile menu */}
