@@ -47,8 +47,10 @@ const NavItem = ({ item, depth = 0, closeMenu }) => {
 
 const Topbar = () => {
   const location = useLocation();
-  const tableId = location.pathname.split("/")[1];
-  const isTableRoute = !isNaN(tableId);
+  // show table number only when URL is exactly "/:tableId" (single numeric segment)
+  const pathSegments = location.pathname.split('/').filter(Boolean);
+  const showTableNumber = pathSegments.length === 1 && !isNaN(pathSegments[0]);
+  const tableId = showTableNumber ? pathSegments[0] : null;
   const [menuOpen, setMenuOpen] = useState(false);
 
   // Menu items should not include the table info — render table info separately
@@ -68,16 +70,13 @@ const Topbar = () => {
 
         {/* Desktop menu */}
         <div className="hidden md:flex items-center space-x-6 text-base">
-          {isTableRoute && (
-            <>
-              <div className="text-gray-700 text-sm">{tableId}</div>
-              <NavLink
-                to="/"
-                className="text-red-600 hover:bg-red-100/30 px-3 py-2 rounded-md transition-colors duration-200 text-sm"
-              >
-                เปลี่ยนโต๊ะ
-              </NavLink>
-            </>
+          {showTableNumber && (
+            <NavLink
+              to="/"
+              className="text-red-600 hover:bg-red-100/30 px-3 py-2 rounded-md transition-colors duration-200 text-sm"
+            >
+              เปลี่ยนโต๊ะ
+            </NavLink>
           )}
           {menuItems.map((item, idx) => (
             <div key={idx} className="relative group">
@@ -112,18 +111,17 @@ const Topbar = () => {
         <div className="md:hidden bg-white border-t border-gray-100 shadow-sm">
           <div className="pt-2 pb-4">
             {/* Show table info at top of mobile menu (separate from links) */}
-            {isTableRoute && (
-              <div className="px-4 py-2 border-b border-gray-100">
-                <div className="text-sm text-gray-700">{tableId}</div>
-                <NavLink
-                  to="/"
-                  onClick={() => setMenuOpen(false)}
-                  className="mt-2 inline-block text-sm text-red-600 hover:bg-red-100/30 px-3 py-1 rounded"
-                >
-                  เปลี่ยนโต๊ะ
-                </NavLink>
-              </div>
-            )}
+              {showTableNumber && (
+                <div className="px-4 py-2 border-b border-gray-100">
+                  <NavLink
+                    to="/"
+                    onClick={() => setMenuOpen(false)}
+                    className="inline-block text-sm text-red-600 hover:bg-red-100/30 px-3 py-1 rounded"
+                  >
+                    เปลี่ยนโต๊ะ
+                  </NavLink>
+                </div>
+              )}
 
             {menuItems.map((item, i) => (
               <NavItem key={i} item={item} closeMenu={() => setMenuOpen(false)} />
