@@ -9,13 +9,13 @@ const Topbar = () => {
   const hasTableInPath = numericIndex !== -1;
   const tableId = hasTableInPath ? pathSegments[numericIndex] : null;
 
+
+  const [showNotification, setShowNotification] = useState(false);
+
   const handleRequestBill = () => {
-    // For now show a confirmation — backend integration can be added later.
     if (tableId) {
-      // Close menu on mobile
-      setMenuOpen(false);
-      window.alert('เรียกเช็คบิลแล้ว กรุณารอสักครู่');
-      // Optionally dispatch a custom event for other parts of the app to handle:
+      setShowNotification(true);
+      setTimeout(() => setShowNotification(false), 2000);
       try {
         window.dispatchEvent(new CustomEvent('moomoo:request-bill', { detail: { tableId } }));
       } catch (e) {
@@ -40,11 +40,16 @@ const Topbar = () => {
           <button
             type="button"
             onClick={handleRequestBill}
-            className="bg-yellow-500 text-white px-3 py-2 rounded-md hover:bg-yellow-600 transition-colors duration-200 text-sm w-full max-w-xs md:max-w-none md:w-auto"
-            style={{ fontSize: '1rem' }}
+            className="bg-yellow-500 text-white px-2 py-1 rounded-md hover:bg-yellow-600 transition-colors duration-200 text-xs md:text-sm"
+            style={{ minWidth: '90px' }}
           >
             เรียกเช็คบิล
           </button>
+        )}
+        {showNotification && (
+          <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-4 py-2 rounded shadow-lg z-50 text-sm">
+            เรียกเช็คบิลแล้ว กรุณารอสักครู่
+          </div>
         )}
       </div>
     </nav>
