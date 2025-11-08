@@ -70,7 +70,7 @@ const Topbar = () => {
         <div className="hidden md:flex items-center space-x-6 text-base">
           {isTableRoute && (
             <>
-              <div className="text-gray-700 text-sm">โต๊ะที่ {tableId}</div>
+              <div className="text-gray-700 text-sm">{tableId}</div>
               <NavLink
                 to="/"
                 className="text-red-600 hover:bg-red-100/30 px-3 py-2 rounded-md transition-colors duration-200 text-sm"
@@ -114,7 +114,7 @@ const Topbar = () => {
             {/* Show table info at top of mobile menu (separate from links) */}
             {isTableRoute && (
               <div className="px-4 py-2 border-b border-gray-100">
-                <div className="text-sm text-gray-700">โต๊ะที่ {tableId}</div>
+                <div className="text-sm text-gray-700">{tableId}</div>
                 <NavLink
                   to="/"
                   onClick={() => setMenuOpen(false)}
