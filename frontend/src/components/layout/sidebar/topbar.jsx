@@ -10,7 +10,7 @@ const Topbar = () => {
     <nav className="bg-white shadow-md">
       <div className="container mx-auto flex items-center justify-between p-4">
         <NavLink to="/" className="text-2xl font-bold text-red-600">
-          MooMooii
+          MooMoo
         </NavLink>
 
         <div className="flex items-center space-x-8">
