@@ -51,19 +51,13 @@ const Topbar = () => {
   const isTableRoute = !isNaN(tableId);
   const [menuOpen, setMenuOpen] = useState(false);
 
+  // Menu items should not include the table info — render table info separately
   const menuItems = [
-    isTableRoute && {
-      label: `โต๊ะที่ ${tableId}`,
-      path: "#",
-      children: [
-        { label: "เปลี่ยนโต๊ะ", path: "/" },
-      ],
-    },
     {
       label: "Admin Panel",
       path: "/admin",
     },
-  ].filter(Boolean);
+  ];
 
   return (
     <nav className="bg-white shadow-md w-full z-50">
@@ -74,6 +68,17 @@ const Topbar = () => {
 
         {/* Desktop menu */}
         <div className="hidden md:flex items-center space-x-6 text-base">
+          {isTableRoute && (
+            <>
+              <div className="text-gray-700 text-sm">โต๊ะที่ {tableId}</div>
+              <NavLink
+                to="/"
+                className="text-red-600 hover:bg-red-100/30 px-3 py-2 rounded-md transition-colors duration-200 text-sm"
+              >
+                เปลี่ยนโต๊ะ
+              </NavLink>
+            </>
+          )}
           {menuItems.map((item, idx) => (
             <div key={idx} className="relative group">
               <NavLink
@@ -82,19 +87,6 @@ const Topbar = () => {
               >
                 {item.label}
               </NavLink>
-              {item.children && (
-                <div className="absolute left-0 top-full mt-2 w-40 bg-white shadow-lg rounded-lg overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity">
-                  {item.children.map((child, j) => (
-                    <NavLink
-                      key={j}
-                      to={child.path}
-                      className="block px-4 py-2 text-gray-600 hover:text-red-600 hover:bg-red-100/40"
-                    >
-                      {child.label}
-                    </NavLink>
-                  ))}
-                </div>
-              )}
             </div>
           ))}
         </div>
@@ -119,6 +111,20 @@ const Topbar = () => {
       {menuOpen && (
         <div className="md:hidden bg-white border-t border-gray-100 shadow-sm">
           <div className="pt-2 pb-4">
+            {/* Show table info at top of mobile menu (separate from links) */}
+            {isTableRoute && (
+              <div className="px-4 py-2 border-b border-gray-100">
+                <div className="text-sm text-gray-700">โต๊ะที่ {tableId}</div>
+                <NavLink
+                  to="/"
+                  onClick={() => setMenuOpen(false)}
+                  className="mt-2 inline-block text-sm text-red-600 hover:bg-red-100/30 px-3 py-1 rounded"
+                >
+                  เปลี่ยนโต๊ะ
+                </NavLink>
+              </div>
+            )}
+
             {menuItems.map((item, i) => (
               <NavItem key={i} item={item} closeMenu={() => setMenuOpen(false)} />
             ))}
