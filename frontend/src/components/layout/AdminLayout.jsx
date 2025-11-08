@@ -3,9 +3,11 @@ import { NavLink, Outlet } from "react-router-dom";
 
 const AdminLayout = () => {
   const adminMenuItems = [
-    { name: "Dashboard", path: "/admin" },
-    { name: "Tables", path: "/admin/table" },
-    { name: "Billing", path: "/admin/billing" },
+    { name: "เมนู", path: "/admin/menu" },
+    { name: "ออเดอร์", path: "/admin/orders" },
+    { name: "โต๊ะ", path: "/admin/tables" },
+    { name: "บิล", path: "/admin/billing" },
+    { name: "คิวรอ", path: "/admin/waitlist" },
   ];
 
   return (
@@ -16,7 +18,7 @@ const AdminLayout = () => {
             MooMooii Admin
           </div>
 
-          <div className="flex space-x-8">
+          <div className="flex items-center space-x-8">
             {adminMenuItems.map((item) => (
               <NavLink
                 key={item.name}
@@ -34,7 +36,7 @@ const AdminLayout = () => {
               to="/"
               className="text-gray-300 hover:text-white hover:bg-gray-700 px-3 py-2 rounded-md transition-colors duration-200"
             >
-              Go to User Site
+              กลับหน้าร้าน
             </NavLink>
           </div>
         </div>

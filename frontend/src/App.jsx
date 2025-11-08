@@ -8,9 +8,11 @@ import TableList from "@/page/user/TableList";
 import OrderPage from "@/page/user/OrderPage";
 
 // Admin Pages
-import HomeAdmin from "@/page/admin/homeAdmin";
-import AdminTable from "@/page/admin/table";
-import AdminBilling from "@/page/admin/billing";
+import MenuManagement from "@/page/admin/menu";
+import OrderQueue from "@/page/admin/orderQueue";
+import TableManagement from "@/page/admin/tableManagement";
+import BillingManagement from "@/page/admin/billingManagement";
+import WaitlistManagement from "@/page/admin/waitlistManagement";
 
 function App() {
   return (
@@ -18,9 +20,12 @@ function App() {
       <Routes>
         {/* Admin Routes */}
         <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<HomeAdmin />} />
-          <Route path="table" element={<AdminTable />} />
-          <Route path="billing" element={<AdminBilling />} />
+          <Route path="menu" element={<MenuManagement />} />
+          <Route path="orders" element={<OrderQueue />} />
+          <Route path="tables" element={<TableManagement />} />
+          <Route path="billing" element={<BillingManagement />} />
+          <Route path="waitlist" element={<WaitlistManagement />} />
+          <Route index element={<MenuManagement />} /> {/* Default admin page */}
         </Route>
 
         {/* User Routes */}
