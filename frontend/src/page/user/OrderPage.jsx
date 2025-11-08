@@ -58,51 +58,49 @@ function OrderPage() {
         <div className="text-red-600 font-semibold">เวลาคงเหลือ: 1:59:59</div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-2">
-          <div className="bg-red-50 rounded-lg p-4 mb-6">
-            <h2 className="text-lg font-semibold mb-2">รายการอาหารที่สั่ง</h2>
-            <div className="space-y-2">
-              {cart.length === 0 && <div className="text-gray-600">ยังไม่มีรายการอาหาร</div>}
-              {cart.map((it) => (
-                <div key={it.id} className="flex items-center justify-between bg-white p-2 rounded">
-                  <div>
-                    <div className="font-medium">{it.name}</div>
-                    <div className="text-sm text-gray-500">{it.qty} × ฿{it.price}</div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button onClick={() => removeFromCart(it.id)} className="px-2 py-1 bg-gray-200 rounded">-</button>
-                    <button onClick={() => addToCart(it)} className="px-2 py-1 bg-gray-200 rounded">+</button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <h2 className="text-lg font-semibold mb-4">เมนูอาหาร</h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {menu.map((m) => (
-                <div key={m.id} className="border rounded p-3 bg-white">
-                  <div className="font-semibold mb-1">{m.name}</div>
-                  <div className="text-sm text-gray-600 mb-3">฿{m.price}</div>
-                  <button onClick={() => addToCart(m)} className="bg-red-600 text-white px-3 py-1 rounded text-sm">เพิ่ม</button>
-                </div>
-              ))}
-            </div>
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-lg font-semibold mb-4">เมนูอาหาร</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {menu.map((m) => (
+              <div key={m.id} className="border rounded p-3 bg-white">
+                <div className="font-semibold mb-1">{m.name}</div>
+                <div className="text-sm text-gray-600 mb-3">฿{m.price}</div>
+                <button onClick={() => addToCart(m)} className="bg-red-600 text-white px-3 py-1 rounded text-sm">เพิ่ม</button>
+              </div>
+            ))}
           </div>
         </div>
 
-        <aside className="bg-white border rounded-lg p-4">
-          <h3 className="font-semibold mb-2">สรุปคำสั่ง</h3>
-          <div className="mb-4">
-            <div className="text-sm text-gray-600">รายการ: {cart.reduce((s, i) => s + i.qty, 0)}</div>
-            <div className="text-lg font-bold">รวม: ฿{total}</div>
+        <div className="bg-red-50 rounded-lg p-4">
+          <h2 className="text-lg font-semibold mb-2">ตะกร้า</h2>
+          <div className="space-y-2 mb-4">
+            {cart.length === 0 && <div className="text-gray-600">ยังไม่มีรายการอาหาร</div>}
+            {cart.map((it) => (
+              <div key={it.id} className="flex items-center justify-between bg-white p-2 rounded">
+                <div>
+                  <div className="font-medium">{it.name}</div>
+                  <div className="text-sm text-gray-500">{it.qty} × ฿{it.price}</div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => removeFromCart(it.id)} className="px-2 py-1 bg-gray-200 rounded">-</button>
+                  <button onClick={() => addToCart(it)} className="px-2 py-1 bg-gray-200 rounded">+</button>
+                </div>
+              </div>
+            ))}
           </div>
-          <button onClick={submitOrder} disabled={cart.length===0} className={`w-full py-2 rounded ${cart.length===0 ? 'bg-gray-300 text-gray-700' : 'bg-red-600 text-white hover:bg-red-700'}`}>
-            สั่งอาหาร
-          </button>
-        </aside>
+
+          <div className="bg-white border rounded-lg p-4">
+            <h3 className="font-semibold mb-2">สรุปคำสั่ง</h3>
+            <div className="mb-4">
+              <div className="text-sm text-gray-600">รายการ: {cart.reduce((s, i) => s + i.qty, 0)}</div>
+              <div className="text-lg font-bold">รวม: ฿{total}</div>
+            </div>
+            <button onClick={submitOrder} disabled={cart.length===0} className={`w-full py-2 rounded ${cart.length===0 ? 'bg-gray-300 text-gray-700' : 'bg-red-600 text-white hover:bg-red-700'}`}>
+              สั่งอาหาร
+            </button>
+          </div>
+        </div>
       </div>
 
       {showNotification && (
