@@ -35,7 +35,7 @@ npm install
 # MongoDB Connection
 MONGODB_URI=mongodb://localhost:27017/moomoo
 # Or for MongoDB Atlas:
-# MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/moomoo
+# MONGODB_URI=secret
 
 # Server Configuration
 PORT=5000
