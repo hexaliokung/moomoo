@@ -5,6 +5,7 @@ import tableService from '../../services/tableService';
 
 function TableManagement() {
   const [tables, setTables] = useState([]);
+  const [allTables, setAllTables] = useState([]); // All tables for stats
   const [statusFilter, setStatusFilter] = useState(null);
   const [showOpenDialog, setShowOpenDialog] = useState(false);
   const [selectedTable, setSelectedTable] = useState(null);
@@ -12,6 +13,8 @@ function TableManagement() {
   const [showPINDialog, setShowPINDialog] = useState(false);
   const [openedTableData, setOpenedTableData] = useState(null);
   const [copiedField, setCopiedField] = useState(null);
+  const [showViewPINDialog, setShowViewPINDialog] = useState(false);
+  const [viewPINData, setViewPINData] = useState(null);
 
   // Open table form state
   const [openForm, setOpenForm] = useState({
@@ -28,7 +31,19 @@ function TableManagement() {
   }, []);
 
   /**
-   * Fetch tables from API
+   * Fetch all tables for stats (always without filter)
+   */
+  const fetchAllTables = async () => {
+    try {
+      const response = await tableService.getTables(null);
+      setAllTables(response.data);
+    } catch (error) {
+      console.error('Failed to fetch all tables:', error);
+    }
+  };
+
+  /**
+   * Fetch tables from API with filter
    */
   const fetchTables = async () => {
     try {
@@ -43,8 +58,12 @@ function TableManagement() {
    * Poll tables every 2 seconds
    */
   useEffect(() => {
+    fetchAllTables();
     fetchTables();
-    const interval = setInterval(fetchTables, 2000);
+    const interval = setInterval(() => {
+      fetchAllTables();
+      fetchTables();
+    }, 2000);
     return () => clearInterval(interval);
   }, [statusFilter]);
 
@@ -81,6 +100,7 @@ function TableManagement() {
       });
       setShowOpenDialog(false);
       setShowPINDialog(true);
+      fetchAllTables();
       fetchTables();
     } catch (error) {
       alert('เกิดข้อผิดพลาด: ' + error.message);
@@ -108,6 +128,25 @@ function TableManagement() {
 
 
   /**
+   * Handle view PIN for open table
+   */
+  const handleViewPIN = (tableNumber) => {
+    const table = allTables.find(t => t.tableNumber === tableNumber);
+    if (table && table.status === 'Open') {
+      setViewPINData({
+        tableNumber: table.tableNumber,
+        pin: table.pin,
+        encryptedId: table.encryptedId,
+        customerCount: table.customerCount,
+        buffetTier: table.buffetTier
+      });
+      setShowViewPINDialog(true);
+    } else {
+      alert('ไม่พบข้อมูล PIN สำหรับโต๊ะนี้');
+    }
+  };
+
+  /**
    * Handle view bill (redirect to billing management)
    */
   const handleViewBill = (tableNumber) => {
@@ -126,6 +165,7 @@ function TableManagement() {
     try {
       await tableService.closeTable(tableNumber);
       alert(`โต๊ะ ${tableNumber} ชำระเงินเรียบร้อย! โต๊ะพร้อมรับลูกค้าใหม่`);
+      fetchAllTables();
       fetchTables();
     } catch (error) {
       alert('เกิดข้อผิดพลาด: ' + error.message);
@@ -135,15 +175,15 @@ function TableManagement() {
   };
 
   /**
-   * Get statistics
+   * Get statistics (use allTables for accurate stats)
    */
   const getStats = () => {
     const stats = {
-      total: tables.length,
-      available: tables.filter(t => t.status === 'Available').length,
-      reserved: tables.filter(t => t.status === 'Reserved').length,
-      open: tables.filter(t => t.status === 'Open').length,
-      customers: tables.filter(t => t.status === 'Open').reduce((sum, t) => sum + t.customerCount, 0)
+      total: allTables.length,
+      available: allTables.filter(t => t.status === 'Available').length,
+      reserved: allTables.filter(t => t.status === 'Reserved').length,
+      open: allTables.filter(t => t.status === 'Open').length,
+      customers: allTables.filter(t => t.status === 'Open').reduce((sum, t) => sum + t.customerCount, 0)
     };
     return stats;
   };
@@ -293,6 +333,7 @@ function TableManagement() {
         onOpenTable={handleOpenTable}
         onViewBill={handleViewBill}
         onCloseTable={handleCloseTable}
+        onViewPIN={handleViewPIN}
         statusFilter={statusFilter}
       />
 
@@ -445,6 +486,92 @@ function TableManagement() {
                 setOpenedTableData(null);
               }}
               className="w-full bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+            >
+              ปิด
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* View PIN Dialog (for existing open tables) */}
+      {showViewPINDialog && viewPINData && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-900 rounded-2xl p-8 max-w-lg w-full border border-amber-600/30">
+            <div className="text-center mb-6">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-amber-600 rounded-full mb-4">
+                <span className="text-3xl">🔑</span>
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-2">
+                รหัสโต๊ะ {viewPINData.tableNumber}
+              </h3>
+            </div>
+
+            {/* PIN Display */}
+            <div className="bg-black/50 border border-amber-600/30 rounded-xl p-6 mb-4">
+              <p className="text-gray-400 text-sm mb-2 text-center">
+                รหัส PIN สำหรับลูกค้า
+              </p>
+              <div className="flex items-center justify-center gap-3">
+                <div className="text-5xl font-bold text-amber-500 tracking-widest">
+                  {viewPINData.pin}
+                </div>
+                <button
+                  onClick={() => copyToClipboard(viewPINData.pin, 'viewpin')}
+                  className="p-3 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+                >
+                  {copiedField === 'viewpin' ? (
+                    <Check className="w-5 h-5 text-green-500" />
+                  ) : (
+                    <Copy className="w-5 h-5 text-gray-400" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Menu URL */}
+            <div className="bg-black/50 border border-amber-600/30 rounded-xl p-4 mb-4">
+              <p className="text-gray-400 text-sm mb-2">
+                ลิงก์เมนู
+              </p>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={getMenuURL(viewPINData.encryptedId)}
+                  readOnly
+                  className="flex-1 bg-black/50 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm"
+                />
+                <button
+                  onClick={() => copyToClipboard(getMenuURL(viewPINData.encryptedId), 'viewurl')}
+                  className="p-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+                >
+                  {copiedField === 'viewurl' ? (
+                    <Check className="w-5 h-5 text-green-500" />
+                  ) : (
+                    <Copy className="w-5 h-5 text-gray-400" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Table Info */}
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="text-center bg-gray-800/50 rounded-lg p-3">
+                <p className="text-gray-400 text-sm">จำนวนลูกค้า</p>
+                <p className="text-white text-xl font-bold">{viewPINData.customerCount} ท่าน</p>
+              </div>
+              <div className="text-center bg-gray-800/50 rounded-lg p-3">
+                <p className="text-gray-400 text-sm">ประเภท</p>
+                <p className="text-white text-xl font-bold">{viewPINData.buffetTier === 'Starter' ? 'ธรรมดา' : 'พรีเมียม'}</p>
+              </div>
+            </div>
+
+            {/* Close Button */}
+            <button
+              onClick={() => {
+                setShowViewPINDialog(false);
+                setViewPINData(null);
+              }}
+              className="w-full bg-gray-700 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
             >
               ปิด
             </button>

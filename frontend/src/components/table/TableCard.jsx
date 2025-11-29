@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clock, Users, DollarSign, CreditCard, Eye, Play } from 'lucide-react';
+import { Clock, Users, DollarSign, CreditCard, Eye, Play, Key } from 'lucide-react';
 import { useTableTimer } from '../../hook/useTableTimer';
 
 /**
@@ -14,7 +14,8 @@ export const TableCard = ({
   table,
   onOpenTable,
   onViewBill,
-  onCloseTable
+  onCloseTable,
+  onViewPIN
 }) => {
   const { formattedTime, timerColorClass, isOvertime, isExpiringSoon } = useTableTimer(table);
 
@@ -31,41 +32,6 @@ export const TableCard = ({
       Closed: 'border-gray-600/40 bg-gradient-to-br from-gray-800/60 to-gray-900/60'
     };
     return statusMap[table.status] || statusMap.Available;
-  };
-
-  /**
-   * Get status badge style based on table status
-   */
-  const getStatusBadge = () => {
-    const statusMap = {
-      Available: {
-        bg: 'bg-gradient-to-r from-green-500 to-green-600',
-        shadow: 'shadow-green-500/30',
-        label: 'ว่าง',
-        icon: '✓'
-      },
-      Open: {
-        bg: 'bg-gradient-to-r from-blue-500 to-blue-600',
-        shadow: 'shadow-blue-500/30',
-        label: 'กำลังใช้งาน',
-        icon: '●'
-      },
-      Closed: {
-        bg: 'bg-gradient-to-r from-gray-500 to-gray-600',
-        shadow: 'shadow-gray-500/30',
-        label: 'ปิด',
-        icon: '✕'
-      }
-    };
-
-    const status = statusMap[table.status] || statusMap.Available;
-
-    return (
-      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold text-white ${status.bg} shadow-lg ${status.shadow}`}>
-        <span className="text-[10px]">{status.icon}</span>
-        {status.label}
-      </span>
-    );
   };
 
   /**
@@ -104,38 +70,28 @@ export const TableCard = ({
 
   return (
     <div className={`
-      group relative rounded-xl p-4 border-2 transition-all duration-300 
-      hover:shadow-lg backdrop-blur-sm h-full flex flex-col
+      group relative rounded-xl p-3 md:p-4 border-2 transition-all duration-300 
+      hover:shadow-lg backdrop-blur-sm h-full flex flex-col min-h-[180px] md:min-h-[200px]
       ${getStatusStyle()}
     `}>
       {/* Header */}
-      <div className="relative flex justify-between items-start mb-3">
-        <div className="flex items-center gap-2">
-          <div className="w-9 h-9 bg-gray-700/80 rounded-lg flex items-center justify-center text-lg">
-            🪑
-          </div>
-          <div>
-            <h3 className="text-xl md:text-2xl font-bold text-white leading-none">
-              {table.tableNumber}
-            </h3>
-            <div className="mt-1">
-              {getStatusBadge()}
-            </div>
-          </div>
+      <div className="relative flex justify-between items-start gap-2 mb-2 md:mb-3">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <h3 className="text-xl md:text-2xl font-bold text-white leading-none">
+            โต๊ะ {table.tableNumber}
+          </h3>
         </div>
         
         {/* Timer Display */}
         {table.status === 'Open' && (
           <div className={`
-            flex flex-col items-center bg-gray-900/80 px-2 py-1.5 rounded-lg border
+            shrink-0 flex items-center bg-gray-900/80 px-1.5 md:px-2 py-1 md:py-1.5 rounded-lg border
             ${isOvertime ? 'border-red-500/50' : isExpiringSoon ? 'border-yellow-500/50' : 'border-gray-700/50'}
           `}>
-            <div className="flex items-center gap-1">
-              <Clock className={`w-3 h-3 ${isOvertime ? 'text-red-400' : isExpiringSoon ? 'text-yellow-400' : 'text-gray-400'}`} />
-              <span className={`text-sm md:text-base font-mono font-bold ${timerColorClass}`}>
-                {formattedTime}
-              </span>
-            </div>
+            <Clock className={`w-3 h-3 shrink-0 ${isOvertime ? 'text-red-400' : isExpiringSoon ? 'text-yellow-400' : 'text-gray-400'}`} />
+            <span className={`text-[10px] md:text-sm font-mono font-bold ml-1 whitespace-nowrap ${timerColorClass}`}>
+              {formattedTime}
+            </span>
           </div>
         )}
       </div>
@@ -144,49 +100,42 @@ export const TableCard = ({
       <div className="flex-1">
         {/* Table Info for Open Tables */}
         {table.status === 'Open' && (
-          <div className="space-y-2 mb-3">
+          <div className="mb-2 md:mb-3">
             {/* Customer & Tier Info */}
-            <div className="flex items-center justify-between bg-gray-900/50 rounded-lg p-2.5 border border-gray-700/30">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 bg-blue-600/20 rounded flex items-center justify-center">
-                  <Users className="w-3.5 h-3.5 text-blue-400" />
+            <div className="flex items-center justify-between bg-gray-900/50 rounded-lg p-2 md:p-2.5 border border-gray-700/30">
+              <div className="flex items-center gap-1.5 md:gap-2">
+                <div className="w-6 h-6 md:w-7 md:h-7 bg-blue-600/20 rounded flex items-center justify-center">
+                  <Users className="w-3 h-3 md:w-3.5 md:h-3.5 text-blue-400" />
                 </div>
                 <div>
-                  <span className="text-white font-semibold text-sm">{table.customerCount}</span>
-                  <span className="text-gray-400 text-xs ml-1">ท่าน</span>
+                  <span className="text-white font-semibold text-xs md:text-sm">{table.customerCount}</span>
+                  <span className="text-gray-400 text-[10px] md:text-xs ml-0.5 md:ml-1">ท่าน</span>
                 </div>
               </div>
               {getBuffetTierDisplay()}
             </div>
-
-            {table.currentBill && (
-              <div className="flex items-center gap-2 text-amber-400 text-xs bg-amber-900/20 px-2.5 py-1.5 rounded-lg border border-amber-600/20">
-                <DollarSign className="w-3.5 h-3.5" />
-                <span>มีบิลค้าง</span>
-              </div>
-            )}
           </div>
         )}
 
         {/* Empty state for Available tables */}
         {table.status === 'Available' && (
-          <div className="py-4 flex flex-col items-center justify-center text-gray-500">
-            <div className="w-10 h-10 bg-gray-800/50 rounded-full flex items-center justify-center mb-1.5 border border-dashed border-gray-600">
-              <Users className="w-5 h-5 text-gray-600" />
+          <div className="py-2 md:py-4 flex flex-col items-center justify-center text-gray-500">
+            <div className="w-8 h-8 md:w-10 md:h-10 bg-gray-800/50 rounded-full flex items-center justify-center mb-1 md:mb-1.5 border border-dashed border-gray-600">
+              <Users className="w-4 h-4 md:w-5 md:h-5 text-gray-600" />
             </div>
-            <span className="text-xs">พร้อมรับลูกค้า</span>
+            <span className="text-[10px] md:text-xs">พร้อมรับลูกค้า</span>
           </div>
         )}
       </div>
 
       {/* Action Buttons - Always at bottom */}
-      <div className="flex gap-2 mt-auto">
+      <div className="grid grid-cols-3 gap-1.5 md:gap-2 mt-auto">
         {table.status === 'Available' && (
           <button
             onClick={() => onOpenTable(table.tableNumber)}
-            className="flex-1 bg-green-600 hover:bg-green-500 text-white px-3 py-2.5 rounded-lg font-semibold transition-colors flex items-center justify-center gap-1.5 text-sm"
+            className="col-span-3 bg-green-600 hover:bg-green-500 text-white px-2 md:px-3 py-2 md:py-2.5 rounded-lg font-semibold transition-colors flex items-center justify-center gap-1 md:gap-1.5 text-xs md:text-sm"
           >
-            <Play className="w-4 h-4" />
+            <Play className="w-3.5 h-3.5 md:w-4 md:h-4" />
             เปิดโต๊ะ
           </button>
         )}
@@ -194,18 +143,26 @@ export const TableCard = ({
         {table.status === 'Open' && (
           <>
             <button
-              onClick={() => onViewBill(table.tableNumber)}
-              className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white px-2 py-2.5 rounded-lg font-semibold transition-colors flex items-center justify-center gap-1 text-sm"
+              onClick={() => onViewPIN && onViewPIN(table.tableNumber)}
+              className="bg-gray-700 hover:bg-gray-600 text-amber-400 py-2 md:py-2.5 rounded-lg font-semibold transition-colors flex items-center justify-center gap-0.5 md:gap-1 text-xs md:text-sm border border-gray-600"
+              title="ดูรหัส PIN"
             >
-              <Eye className="w-4 h-4" />
-              <span className="hidden sm:inline">ดู</span>บิล
+              <Key className="w-3.5 h-3.5 md:w-4 md:h-4" />
+              <span className="hidden md:inline">รหัส</span>
+            </button>
+            <button
+              onClick={() => onViewBill(table.tableNumber)}
+              className="bg-emerald-600 hover:bg-emerald-500 text-white py-2 md:py-2.5 rounded-lg font-semibold transition-colors flex items-center justify-center gap-0.5 md:gap-1 text-xs md:text-sm"
+            >
+              <Eye className="w-3.5 h-3.5 md:w-4 md:h-4" />
+              <span className="hidden sm:inline">บิล</span>
             </button>
             <button
               onClick={() => onCloseTable(table.tableNumber)}
-              className="flex-1 bg-red-600 hover:bg-red-500 text-white px-2 py-2.5 rounded-lg font-semibold transition-colors flex items-center justify-center gap-1 text-sm"
+              className="bg-red-600 hover:bg-red-500 text-white py-2 md:py-2.5 rounded-lg font-semibold transition-colors flex items-center justify-center gap-0.5 md:gap-1 text-xs md:text-sm"
             >
-              <CreditCard className="w-4 h-4" />
-              <span className="hidden sm:inline">ชำระ</span>เงิน
+              <CreditCard className="w-3.5 h-3.5 md:w-4 md:h-4" />
+              <span className="hidden sm:inline">จ่าย</span>
             </button>
           </>
         )}

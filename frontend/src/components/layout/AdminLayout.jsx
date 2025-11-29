@@ -36,7 +36,9 @@ const AdminLayout = () => {
                   <Flame className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-xl font-serif font-bold text-white">มูคระทา</h1>
+                  <h1 className="text-2xl font-serif font-bold">
+                    <span className="text-red-600">m</span><span className="text-white">oo</span><span className="text-red-600">m</span><span className="text-white">oo</span>
+                  </h1>
                   <p className="text-xs text-red-400">Admin Panel</p>
                 </div>
               </div>
@@ -113,7 +115,7 @@ const AdminLayout = () => {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <div className="text-center">
               <p className="text-gray-400 text-sm">
-                © 2024 มูคระทา Admin Panel | All rights reserved
+                © 2024 moomoo Admin Panel | All rights reserved
               </p>
             </div>
           </div>

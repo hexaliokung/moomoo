@@ -16,6 +16,7 @@ export const TableGrid = ({
   onOpenTable,
   onViewBill,
   onCloseTable,
+  onViewPIN,
   statusFilter = null
 }) => {
   // Filter tables by status if provided
@@ -45,7 +46,7 @@ export const TableGrid = ({
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 md:gap-5">
+    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
       {sortedTables.map(table => (
         <TableCard
           key={table.tableNumber}
@@ -53,6 +54,7 @@ export const TableGrid = ({
           onOpenTable={onOpenTable}
           onViewBill={onViewBill}
           onCloseTable={onCloseTable}
+          onViewPIN={onViewPIN}
         />
       ))}
     </div>
