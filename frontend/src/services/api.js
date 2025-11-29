@@ -2,7 +2,7 @@ import axios from "axios";
 
 // Create axios instance with base configuration
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000/api",
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000/api",
   timeout: 10000,
   withCredentials: true, // Send cookies with requests (for JWT)
   headers: {
@@ -36,10 +36,8 @@ api.interceptors.response.use(
     // Handle 401 Unauthorized - Token expired or invalid
     if (error.response?.status === 401) {
       localStorage.removeItem("token");
-      // Redirect to login if on admin route
-      if (window.location.pathname.startsWith("/admin")) {
-        window.location.href = "/admin/login";
-      }
+      // TODO: Implement login page if authentication is needed
+      console.warn("Unauthorized: Authentication required");
     }
 
     // Handle 403 Forbidden - Insufficient permissions

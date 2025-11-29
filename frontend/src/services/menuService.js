@@ -17,7 +17,6 @@ class MenuService {
     // Request interceptor
     this.api.interceptors.request.use(
       (config) => {
-        // Add any auth tokens here if needed
         console.log(
           `Making ${config.method?.toUpperCase()} request to ${config.url}`
         );
@@ -36,56 +35,21 @@ class MenuService {
       },
       (error) => {
         console.error("Response error:", error);
-        // Network error or backend not available
         if (
           error.code === "ERR_NETWORK" ||
           error.code === "ERR_CONNECTION_REFUSED"
         ) {
-          console.warn(
-            "Backend server not available - this is expected in development mode"
-          );
-        } else if (error.response?.status === 404) {
-          console.warn("Menu endpoint not found - using fallback data");
+          console.warn("Backend server not available");
         }
         return Promise.reject(error);
       }
     );
   }
 
-  // Get menu by tier (259 or 299)
-  async getMenuByTier(tier) {
-    try {
-      const response = await this.api.get(`/menu/tier/${tier}`);
-      return response.data;
-    } catch (error) {
-      console.error("Failed to fetch menu by tier:", error);
-      throw new Error(
-        `Unable to load menu tier ${tier}. Please check your connection and try again.`
-      );
-    }
-  }
-
   /**
-   * Get menu items by category
-   * @param {String} category - 'Starter Buffet', 'Premium Buffet', 'Special Menu', or null for all
-   * @returns {Array} Menu items
+   * Get all menu items grouped by category
+   * @returns {Object} { starter: [], premium: [], special: [] }
    */
-  async getMenuItems(category = null) {
-    try {
-      const url = category
-        ? `/menu?category=${encodeURIComponent(category)}`
-        : "/menu";
-      const response = await this.api.get(url);
-      return response.data;
-    } catch (error) {
-      console.error("Failed to fetch menu items:", error);
-      throw new Error(
-        "Unable to load menu. Please check your connection and try again."
-      );
-    }
-  }
-
-  // Get all menu items
   async getAllMenuItems() {
     try {
       const response = await this.api.get("/menu");
@@ -96,66 +60,119 @@ class MenuService {
     }
   }
 
-  // Get special items (paid additions)
-  async getSpecialItems() {
+  /**
+   * Get menu items by category
+   * @param {String} category - 'Starter', 'Premium', or 'Special'
+   * @returns {Array} Menu items in the category
+   */
+  async getMenuByCategory(category) {
     try {
-      const response = await this.api.get("/menu/special");
+      const response = await this.api.get(`/menu/${category}`);
       return response.data;
     } catch (error) {
-      console.error("Failed to fetch special items:", error);
+      console.error(`Failed to fetch ${category} menu:`, error);
       throw error;
     }
   }
 
-  // Get menu categories
-  async getCategories() {
+  /**
+   * Get a specific menu item by category and ID
+   * @param {String} category - 'Starter', 'Premium', or 'Special'
+   * @param {Number} id - Menu item ID
+   * @returns {Object} Menu item
+   */
+  async getMenuItemById(category, id) {
     try {
-      const response = await this.api.get("/menu/categories");
+      const response = await this.api.get(`/menu/${category}/${id}`);
       return response.data;
     } catch (error) {
-      console.error("Failed to fetch categories:", error);
+      console.error("Failed to fetch menu item:", error);
       throw error;
     }
   }
 
-  // Filter menu items by category
-  filterItemsByCategory(items, category) {
-    if (category === "all") return items;
-
-    return items.filter((item) => {
-      const itemCategory = item.category.toLowerCase();
-      const searchCategory = category.toLowerCase();
-
-      // Handle category matching with variations
-      return (
-        itemCategory.includes(searchCategory) ||
-        itemCategory.includes(searchCategory.replace("(พรีเมียม)", "")) ||
-        itemCategory.includes(searchCategory.replace("พิเศษ", ""))
+  /**
+   * Create a new menu item
+   * @param {String} category - 'Starter', 'Premium', or 'Special'
+   * @param {Object} data - { name, description, foodType, imageUrl, price (Special only), isAvailable }
+   * @returns {Object} Created menu item
+   */
+  async createMenuItem(category, data) {
+    try {
+      const response = await this.api.post(`/menu/${category}`, data);
+      return response.data;
+    } catch (error) {
+      console.error("Failed to create menu item:", error);
+      throw new Error(
+        error.response?.data?.message || "Failed to create menu item."
       );
-    });
+    }
   }
 
-  // Calculate total price for items with quantities
+  /**
+   * Update a menu item
+   * @param {String} category - 'Starter', 'Premium', or 'Special'
+   * @param {Number} id - Menu item ID
+   * @param {Object} data - Fields to update
+   * @returns {Object} Updated menu item
+   */
+  async updateMenuItem(category, id, data) {
+    try {
+      const response = await this.api.put(`/menu/${category}/${id}`, data);
+      return response.data;
+    } catch (error) {
+      console.error("Failed to update menu item:", error);
+      throw new Error(
+        error.response?.data?.message || "Failed to update menu item."
+      );
+    }
+  }
+
+  /**
+   * Toggle menu item availability
+   * @param {String} category - 'Starter', 'Premium', or 'Special'
+   * @param {Number} id - Menu item ID
+   * @param {Boolean} isAvailable - New availability status
+   * @returns {Object} Updated menu item
+   */
+  async toggleAvailability(category, id, isAvailable) {
+    try {
+      const response = await this.api.patch(
+        `/menu/${category}/${id}/availability`,
+        { isAvailable }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Failed to toggle availability:", error);
+      throw new Error("Failed to update availability.");
+    }
+  }
+
+  /**
+   * Delete a menu item
+   * @param {String} category - 'Starter', 'Premium', or 'Special'
+   * @param {Number} id - Menu item ID
+   * @returns {Object} Deleted menu item
+   */
+  async deleteMenuItem(category, id) {
+    try {
+      const response = await this.api.delete(`/menu/${category}/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error("Failed to delete menu item:", error);
+      throw new Error("Failed to delete menu item.");
+    }
+  }
+
+  // Helper: Calculate total price for items with quantities
   calculateTotal(items, quantities) {
     return items.reduce((total, item) => {
       const quantity = quantities[item.id] || 0;
-      return total + item.price * quantity;
+      return total + (item.price || 0) * quantity;
     }, 0);
   }
 
-  // Group items by category
-  groupItemsByCategory(items) {
-    return items.reduce((groups, item) => {
-      const category = item.category;
-      if (!groups[category]) {
-        groups[category] = [];
-      }
-      groups[category].push(item);
-      return groups;
-    }, {});
-  }
-
-  // Search menu items
+  // Helper: Search menu items
   searchItems(items, query) {
     if (!query) return items;
 
@@ -163,110 +180,10 @@ class MenuService {
     return items.filter(
       (item) =>
         item.name.toLowerCase().includes(searchTerm) ||
-        item.nameEn.toLowerCase().includes(searchTerm) ||
-        item.description.toLowerCase().includes(searchTerm) ||
-        item.category.toLowerCase().includes(searchTerm)
+        (item.description &&
+          item.description.toLowerCase().includes(searchTerm)) ||
+        (item.foodType && item.foodType.toLowerCase().includes(searchTerm))
     );
-  }
-
-  // Menu management functions for admin
-
-  /**
-   * Create a new menu item (admin only)
-   * @param {Object} data - Menu item data
-   * @returns {Promise} Created menu item
-   */
-  async createMenuItem(data) {
-    try {
-      const response = await this.api.post("/menu", data);
-      return response.data;
-    } catch (error) {
-      console.error("Failed to create menu item:", error);
-      throw new Error(
-        error.response?.data?.message ||
-          "Failed to create menu item. Please try again."
-      );
-    }
-  }
-
-  /**
-   * Get a specific menu item by ID
-   * @param {String} id - Menu item ID
-   * @returns {Promise} Menu item
-   */
-  async getMenuItemById(id) {
-    try {
-      const response = await this.api.get(`/menu/${id}`);
-      return response.data;
-    } catch (error) {
-      console.error("Failed to fetch menu item:", error);
-      throw new Error("Failed to load menu item. Please try again.");
-    }
-  }
-
-  async addMenuItem(menuItemData) {
-    try {
-      const response = await this.api.post("/menu", menuItemData);
-      return response.data;
-    } catch (error) {
-      console.error("Failed to add menu item:", error);
-      throw new Error("Failed to add menu item. Please try again.");
-    }
-  }
-
-  async updateMenuItem(id, menuItemData) {
-    try {
-      const response = await this.api.put(`/menu/${id}`, menuItemData);
-      return response.data;
-    } catch (error) {
-      console.error("Failed to update menu item:", error);
-      throw new Error(
-        error.response?.data?.message ||
-          "Failed to update menu item. Please try again."
-      );
-    }
-  }
-
-  /**
-   * Toggle menu item availability (admin only)
-   * @param {String} id - Menu item ID
-   * @param {String} availability - "Available" or "Out of Stock"
-   * @returns {Promise} Updated menu item
-   */
-  async toggleAvailability(id, availability) {
-    try {
-      const response = await this.api.patch(`/menu/${id}/availability`, {
-        availability,
-      });
-      return response.data;
-    } catch (error) {
-      console.error("Failed to toggle availability:", error);
-      throw new Error("Failed to update availability. Please try again.");
-    }
-  }
-
-  async deleteMenuItem(id) {
-    try {
-      const response = await this.api.delete(`/menu/${id}`);
-      return response.data;
-    } catch (error) {
-      console.error("Failed to delete menu item:", error);
-      throw new Error("Failed to delete menu item. Please try again.");
-    }
-  }
-
-  /**
-   * Get menu items grouped by category
-   * @returns {Promise} Menu items grouped by category
-   */
-  async getMenuByCategory() {
-    try {
-      const response = await this.api.get("/menu/grouped/category");
-      return response.data;
-    } catch (error) {
-      console.error("Failed to fetch grouped menu:", error);
-      throw new Error("Failed to load menu. Please try again.");
-    }
   }
 }
 

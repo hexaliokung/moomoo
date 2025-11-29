@@ -1,12 +1,12 @@
 import React from "react";
 import { NavLink, Outlet } from "react-router-dom";
-import { Flame, Settings, Users, ShoppingCart, FileText, Clock, ArrowLeft, Globe } from "lucide-react";
+import { Flame, Settings, Users, ShoppingCart, FileText, Clock, ArrowLeft } from "lucide-react";
 
 import background from "@/assets/background.png";
 import { useBilingual } from "@/hook/useBilingual";
 
 const AdminLayout = () => {
-  const { language, toggleLanguage, t } = useBilingual();
+  const { t } = useBilingual();
 
   const adminMenuItems = [
     { name: t("admin.menu"), path: "/admin/menu", icon: FileText },
@@ -67,25 +67,14 @@ const AdminLayout = () => {
                 })}
               </div>
 
-              {/* Language Toggle & Back to Store */}
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={toggleLanguage}
-                  className="flex items-center px-3 py-2 bg-gray-800 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg font-medium transition-all duration-300 border border-gray-700 hover:border-gray-600"
-                  title="Toggle Language"
-                >
-                  <Globe className="w-4 h-4 mr-2" />
-                  <span className="text-sm">{language.toUpperCase()}</span>
-                </button>
-
-                <NavLink
-                  to="/"
-                  className="flex items-center px-4 py-2 bg-gray-800 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg font-medium transition-all duration-300 border border-gray-700 hover:border-gray-600"
-                >
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  {language === 'th' ? 'กลับหน้าร้าน' : 'Back to Store'}
-                </NavLink>
-              </div>
+              {/* Back to Store */}
+              <NavLink
+                to="/"
+                className="flex items-center px-4 py-2 bg-gray-800 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg font-medium transition-all duration-300 border border-gray-700 hover:border-gray-600"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                กลับหน้าร้าน
+              </NavLink>
             </div>
 
             {/* Mobile Menu */}

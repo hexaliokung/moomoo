@@ -3,18 +3,37 @@ import MenuService from "../services/MenuService.js";
 
 /**
  * @route   GET /api/menu
- * @desc    Get all menu items with optional filtering
+ * @desc    Get all menu items grouped by category
  * @access  Public
- * @query   category, availability
+ * @query   available - If true, only return available items
  */
 export const getAllMenuItems = asyncHandler(async (req, res) => {
-  const { category, availability } = req.query;
+  const { available } = req.query;
+  const availableOnly = available === "true";
 
-  const filters = {};
-  if (category) filters.category = category;
-  if (availability) filters.availability = availability;
+  const menuItems = await MenuService.getAllMenuItems(availableOnly);
 
-  const menuItems = await MenuService.getAllMenuItems(filters);
+  res.status(200).json({
+    success: true,
+    data: menuItems,
+  });
+});
+
+/**
+ * @route   GET /api/menu/:category
+ * @desc    Get menu items by category
+ * @access  Public
+ * @param   category - 'Starter', 'Premium', or 'Special'
+ */
+export const getMenuByCategory = asyncHandler(async (req, res) => {
+  const { category } = req.params;
+  const { available } = req.query;
+  const availableOnly = available === "true";
+
+  const menuItems = await MenuService.getMenuByCategory(
+    category,
+    availableOnly
+  );
 
   res.status(200).json({
     success: true,
@@ -24,15 +43,14 @@ export const getAllMenuItems = asyncHandler(async (req, res) => {
 });
 
 /**
- * @route   GET /api/menu/:id
- * @desc    Get a specific menu item by ID
+ * @route   GET /api/menu/:category/:id
+ * @desc    Get a specific menu item by category and ID
  * @access  Public
- * @param   id - Menu item ID
  */
 export const getMenuItemById = asyncHandler(async (req, res) => {
-  const { id } = req.params;
+  const { category, id } = req.params;
 
-  const menuItem = await MenuService.getMenuItemById(id);
+  const menuItem = await MenuService.getMenuItemById(category, parseInt(id));
 
   res.status(200).json({
     success: true,
@@ -41,13 +59,15 @@ export const getMenuItemById = asyncHandler(async (req, res) => {
 });
 
 /**
- * @route   POST /api/menu
- * @desc    Create a new menu item
+ * @route   POST /api/menu/:category
+ * @desc    Create a new menu item in a category
  * @access  Private (admin only)
- * @body    { category, nameThai, nameEnglish, descriptionThai, descriptionEnglish, price, imageUrl }
+ * @body    { name, description, imageUrl, foodType, price (Special only), isAvailable }
  */
 export const createMenuItem = asyncHandler(async (req, res) => {
-  const menuItem = await MenuService.createMenuItem(req.body);
+  const { category } = req.params;
+
+  const menuItem = await MenuService.createMenuItem(category, req.body);
 
   res.status(201).json({
     success: true,
@@ -57,16 +77,18 @@ export const createMenuItem = asyncHandler(async (req, res) => {
 });
 
 /**
- * @route   PUT /api/menu/:id
+ * @route   PUT /api/menu/:category/:id
  * @desc    Update an existing menu item
  * @access  Private (admin only)
- * @param   id - Menu item ID
- * @body    Fields to update
  */
 export const updateMenuItem = asyncHandler(async (req, res) => {
-  const { id } = req.params;
+  const { category, id } = req.params;
 
-  const menuItem = await MenuService.updateMenuItem(id, req.body);
+  const menuItem = await MenuService.updateMenuItem(
+    category,
+    parseInt(id),
+    req.body
+  );
 
   res.status(200).json({
     success: true,
@@ -76,58 +98,46 @@ export const updateMenuItem = asyncHandler(async (req, res) => {
 });
 
 /**
- * @route   PATCH /api/menu/:id/availability
+ * @route   PATCH /api/menu/:category/:id/availability
  * @desc    Toggle menu item availability
  * @access  Private (admin only)
- * @param   id - Menu item ID
- * @body    { availability: "Available" | "Out of Stock" }
+ * @body    { isAvailable: boolean }
  */
 export const toggleAvailability = asyncHandler(async (req, res) => {
-  const { id } = req.params;
-  const { availability } = req.body;
+  const { category, id } = req.params;
+  const { isAvailable } = req.body;
 
-  if (!availability) {
+  if (isAvailable === undefined) {
     res.status(400);
-    throw new Error("Availability status is required");
+    throw new Error("isAvailable is required");
   }
 
-  const menuItem = await MenuService.toggleAvailability(id, availability);
+  const menuItem = await MenuService.toggleAvailability(
+    category,
+    parseInt(id),
+    isAvailable
+  );
 
   res.status(200).json({
     success: true,
-    message: `Menu item marked as ${availability}`,
+    message: `Menu item ${isAvailable ? "enabled" : "disabled"} successfully`,
     data: menuItem,
   });
 });
 
 /**
- * @route   DELETE /api/menu/:id
+ * @route   DELETE /api/menu/:category/:id
  * @desc    Delete a menu item
  * @access  Private (admin only)
- * @param   id - Menu item ID
  */
 export const deleteMenuItem = asyncHandler(async (req, res) => {
-  const { id } = req.params;
+  const { category, id } = req.params;
 
-  const menuItem = await MenuService.deleteMenuItem(id);
+  const menuItem = await MenuService.deleteMenuItem(category, parseInt(id));
 
   res.status(200).json({
     success: true,
     message: "Menu item deleted successfully",
     data: menuItem,
-  });
-});
-
-/**
- * @route   GET /api/menu/grouped/category
- * @desc    Get menu items grouped by category (available only)
- * @access  Public
- */
-export const getMenuByCategory = asyncHandler(async (req, res) => {
-  const grouped = await MenuService.getMenuByCategory();
-
-  res.status(200).json({
-    success: true,
-    data: grouped,
   });
 });

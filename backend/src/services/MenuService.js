@@ -2,222 +2,146 @@ import MenuItem from "../models/MenuItem.js";
 
 /**
  * MenuService - Business logic for menu item management
- * Handles CRUD operations, availability toggle, and filtering
+ * Handles 3 separate menu categories: Starter, Premium, Special
  */
 class MenuService {
   /**
-   * Get all menu items with optional filtering
-   * @param {Object} filters - Optional filters { category, availability }
-   * @returns {Promise<Array>} Array of menu items
+   * Get all menu items grouped by category
+   * @param {Boolean} availableOnly - Only return available items
+   * @returns {Object} { starter: [], premium: [], special: [] }
    */
-  async getAllMenuItems(filters = {}) {
-    const query = {};
-
-    if (filters.category) {
-      query.category = filters.category;
-    }
-
-    if (filters.availability) {
-      query.availability = filters.availability;
-    }
-
-    const menuItems = await MenuItem.find(query).sort({
-      category: 1,
-      nameEnglish: 1,
-    });
-    return menuItems;
+  async getAllMenuItems(availableOnly = false) {
+    return MenuItem.findAll(availableOnly);
   }
 
   /**
-   * Get a specific menu item by ID
-   * @param {String} id - Menu item ID
-   * @returns {Promise<Object>} Menu item
+   * Get menu items by category
+   * @param {String} category - 'Starter', 'Premium', or 'Special'
+   * @param {Boolean} availableOnly - Only return available items
+   * @returns {Array} Menu items
    */
-  async getMenuItemById(id) {
-    const menuItem = await MenuItem.findById(id);
+  async getMenuByCategory(category, availableOnly = false) {
+    const validCategories = ["Starter", "Premium", "Special"];
+    if (!validCategories.includes(category)) {
+      throw new Error(
+        `Invalid category. Must be one of: ${validCategories.join(", ")}`
+      );
+    }
+    return MenuItem.findByCategory(category, availableOnly);
+  }
 
+  /**
+   * Get a specific menu item by category and ID
+   * @param {String} category - Category name
+   * @param {Number} id - Menu item ID
+   * @returns {Object} Menu item
+   */
+  async getMenuItemById(category, id) {
+    const menuItem = MenuItem.findById(category, id);
     if (!menuItem) {
       throw new Error("Menu item not found");
     }
-
     return menuItem;
   }
 
   /**
    * Create a new menu item
+   * @param {String} category - Category name
    * @param {Object} data - Menu item data
-   * @returns {Promise<Object>} Created menu item
+   * @returns {Object} Created menu item
    */
-  async createMenuItem(data) {
-    const {
-      category,
-      nameThai,
-      nameEnglish,
-      descriptionThai,
-      descriptionEnglish,
-      price,
-      imageUrl,
-    } = data;
+  async createMenuItem(category, data) {
+    const { name, description, imageUrl, foodType, price, isAvailable } = data;
 
     // Validate required fields
-    if (!category || !nameThai || !nameEnglish) {
-      throw new Error("Category, Thai name, and English name are required");
+    if (!name) {
+      throw new Error("Name is required");
     }
 
     // Validate category
-    const validCategories = [
-      "Starter Buffet",
-      "Premium Buffet",
-      "Special Menu",
-    ];
+    const validCategories = ["Starter", "Premium", "Special"];
     if (!validCategories.includes(category)) {
       throw new Error(
         `Invalid category. Must be one of: ${validCategories.join(", ")}`
       );
     }
 
-    // Validate price
-    if (price === undefined || price === null || price < 0) {
-      throw new Error("Price is required and must be >= 0");
+    // Validate price for Special menu
+    if (category === "Special" && (price === undefined || price < 0)) {
+      throw new Error("Price is required for Special menu and must be >= 0");
     }
 
-    // Create menu item
-    const menuItem = await MenuItem.create({
-      category,
-      nameThai,
-      nameEnglish,
-      descriptionThai: descriptionThai || "",
-      descriptionEnglish: descriptionEnglish || "",
-      price,
-      availability: "Available",
+    return MenuItem.create(category, {
+      name,
+      description: description || "",
       imageUrl: imageUrl || "",
+      foodType: foodType || "",
+      price: category === "Special" ? price : 0,
+      isAvailable: isAvailable !== false,
     });
-
-    return menuItem;
   }
 
   /**
    * Update an existing menu item
-   * @param {String} id - Menu item ID
+   * @param {String} category - Category name
+   * @param {Number} id - Menu item ID
    * @param {Object} updates - Fields to update
-   * @returns {Promise<Object>} Updated menu item
+   * @returns {Object} Updated menu item
    */
-  async updateMenuItem(id, updates) {
-    const menuItem = await MenuItem.findById(id);
-
+  async updateMenuItem(category, id, updates) {
+    const menuItem = MenuItem.findById(category, id);
     if (!menuItem) {
       throw new Error("Menu item not found");
     }
 
-    // Validate category if provided
-    if (updates.category) {
-      const validCategories = [
-        "Starter Buffet",
-        "Premium Buffet",
-        "Special Menu",
-      ];
-      if (!validCategories.includes(updates.category)) {
-        throw new Error(
-          `Invalid category. Must be one of: ${validCategories.join(", ")}`
-        );
-      }
-    }
-
-    // Validate price if provided
+    // Validate price for Special menu
     if (
+      category === "Special" &&
       updates.price !== undefined &&
-      (updates.price === null || updates.price < 0)
+      updates.price < 0
     ) {
       throw new Error("Price must be >= 0");
     }
 
-    // Update fields
-    const allowedUpdates = [
-      "category",
-      "nameThai",
-      "nameEnglish",
-      "descriptionThai",
-      "descriptionEnglish",
-      "price",
-      "imageUrl",
-    ];
-
-    allowedUpdates.forEach((field) => {
-      if (updates[field] !== undefined) {
-        menuItem[field] = updates[field];
-      }
-    });
-
-    await menuItem.save();
-    return menuItem;
+    return MenuItem.updateById(category, id, updates);
   }
 
   /**
    * Toggle menu item availability
-   * @param {String} id - Menu item ID
-   * @param {String} availability - New availability status
-   * @returns {Promise<Object>} Updated menu item
+   * @param {String} category - Category name
+   * @param {Number} id - Menu item ID
+   * @param {Boolean} isAvailable - New availability status
+   * @returns {Object} Updated menu item
    */
-  async toggleAvailability(id, availability) {
-    const menuItem = await MenuItem.findById(id);
-
+  async toggleAvailability(category, id, isAvailable) {
+    const menuItem = MenuItem.findById(category, id);
     if (!menuItem) {
       throw new Error("Menu item not found");
     }
-
-    // Validate availability
-    const validAvailability = ["Available", "Out of Stock"];
-    if (!validAvailability.includes(availability)) {
-      throw new Error(
-        `Invalid availability. Must be one of: ${validAvailability.join(", ")}`
-      );
-    }
-
-    menuItem.availability = availability;
-    await menuItem.save();
-
-    return menuItem;
+    return MenuItem.toggleAvailability(category, id, isAvailable);
   }
 
   /**
    * Delete a menu item
-   * @param {String} id - Menu item ID
-   * @returns {Promise<Object>} Deleted menu item
+   * @param {String} category - Category name
+   * @param {Number} id - Menu item ID
+   * @returns {Object} Deleted menu item
    */
-  async deleteMenuItem(id) {
-    const menuItem = await MenuItem.findById(id);
-
+  async deleteMenuItem(category, id) {
+    const menuItem = MenuItem.findById(category, id);
     if (!menuItem) {
       throw new Error("Menu item not found");
     }
-
-    await MenuItem.findByIdAndDelete(id);
-    return menuItem;
+    return MenuItem.deleteById(category, id);
   }
 
   /**
-   * Get menu items grouped by category
-   * @returns {Promise<Object>} Menu items grouped by category
+   * Get all items as flat array (for compatibility)
+   * @param {Boolean} availableOnly - Only return available items
+   * @returns {Array} All menu items
    */
-  async getMenuByCategory() {
-    const menuItems = await MenuItem.find({ availability: "Available" }).sort({
-      category: 1,
-      nameEnglish: 1,
-    });
-
-    const grouped = {
-      "Starter Buffet": [],
-      "Premium Buffet": [],
-      "Special Menu": [],
-    };
-
-    menuItems.forEach((item) => {
-      if (grouped[item.category]) {
-        grouped[item.category].push(item);
-      }
-    });
-
-    return grouped;
+  async getAllItemsFlat(availableOnly = false) {
+    return MenuItem.findAllFlat(availableOnly);
   }
 }
 

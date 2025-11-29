@@ -148,85 +148,95 @@ function TableManagement() {
   const stats = getStats();
 
   return (
-    <div className="p-6 md:p-8 min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black">
+    <div className="p-4 md:p-8 text-white min-h-screen">
       {/* Header */}
-      <div className="text-center mb-8">
-        <div className="flex justify-center items-center mb-4">
-          <div className="bg-red-600 p-3 rounded-full mr-4">
-            <Users className="w-8 h-8 text-white" />
+      <div className="mb-6 md:mb-8">
+        <h1 className="text-2xl md:text-3xl font-bold font-serif mb-1 md:mb-2">
+          🍽️ {isThai ? 'จัดการโต๊ะ' : 'Table Management'}
+        </h1>
+        <p className="text-gray-400 text-sm md:text-base">
+          {isThai ? 'จัดการโต๊ะและติดตามสถานะ' : 'Manage tables and track status'}
+        </p>
+      </div>
+
+      {/* Statistics - Grid 2x2 */}
+      <div className="grid grid-cols-2 gap-3 md:gap-6 mb-6 md:mb-8">
+        <div className="bg-gray-800/40 p-4 md:p-6 rounded-xl border border-gray-600/30 flex items-center gap-3 md:gap-4">
+          <div className="w-10 h-10 md:w-12 md:h-12 bg-gray-700 rounded-full flex items-center justify-center shrink-0">
+            <span className="text-lg md:text-xl">🪑</span>
           </div>
           <div>
-            <h1 className="text-4xl md:text-5xl font-serif font-bold text-white">
-              {isThai ? 'จัดการโต๊ะ' : 'Table Management'}
-            </h1>
-            <p className="text-red-400 text-lg mt-2">
-              {isThai ? 'Table Management' : 'จัดการโต๊ะ'}
-            </p>
+            <p className="text-gray-400 text-xs md:text-sm">{isThai ? 'ทั้งหมด' : 'Total'}</p>
+            <p className="text-xl md:text-2xl font-bold text-white">{stats.total} <span className="text-sm md:text-base text-gray-400">{isThai ? 'โต๊ะ' : 'tables'}</span></p>
           </div>
         </div>
 
-        {/* Statistics */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-black/50 backdrop-blur-sm border border-red-600/20 rounded-xl p-4">
-            <div className="text-center">
-              <p className="text-gray-400 text-sm">{isThai ? 'ทั้งหมด' : 'Total'}</p>
-              <p className="text-white text-2xl font-bold">{stats.total}</p>
-            </div>
+        <div className="bg-gray-800/40 p-4 md:p-6 rounded-xl border border-green-600/30 flex items-center gap-3 md:gap-4">
+          <div className="w-10 h-10 md:w-12 md:h-12 bg-green-900/50 rounded-full flex items-center justify-center shrink-0">
+            <span className="text-lg md:text-xl">✅</span>
           </div>
-          <div className="bg-black/50 backdrop-blur-sm border border-green-600/20 rounded-xl p-4">
-            <div className="text-center">
-              <p className="text-gray-400 text-sm">{isThai ? 'ว่าง' : 'Available'}</p>
-              <p className="text-green-400 text-2xl font-bold">{stats.available}</p>
-            </div>
+          <div>
+            <p className="text-gray-400 text-xs md:text-sm">{isThai ? 'ว่าง' : 'Available'}</p>
+            <p className="text-xl md:text-2xl font-bold text-green-400">{stats.available} <span className="text-sm md:text-base text-gray-400">{isThai ? 'โต๊ะ' : 'tables'}</span></p>
           </div>
-          <div className="bg-black/50 backdrop-blur-sm border border-blue-600/20 rounded-xl p-4">
-            <div className="text-center">
-              <p className="text-gray-400 text-sm">{isThai ? 'เปิด' : 'Open'}</p>
-              <p className="text-blue-400 text-2xl font-bold">{stats.open}</p>
-            </div>
+        </div>
+
+        <div className="bg-gray-800/40 p-4 md:p-6 rounded-xl border border-blue-600/30 flex items-center gap-3 md:gap-4">
+          <div className="w-10 h-10 md:w-12 md:h-12 bg-blue-900/50 rounded-full flex items-center justify-center shrink-0">
+            <Users className="w-5 h-5 md:w-6 md:h-6 text-blue-400" />
           </div>
-          <div className="bg-black/50 backdrop-blur-sm border border-purple-600/20 rounded-xl p-4">
-            <div className="text-center">
-              <p className="text-gray-400 text-sm">{isThai ? 'ลูกค้า' : 'Customers'}</p>
-              <p className="text-purple-400 text-2xl font-bold">{stats.customers}</p>
-            </div>
+          <div>
+            <p className="text-gray-400 text-xs md:text-sm">{isThai ? 'เปิดอยู่' : 'Open'}</p>
+            <p className="text-xl md:text-2xl font-bold text-blue-400">{stats.open} <span className="text-sm md:text-base text-gray-400">{isThai ? 'โต๊ะ' : 'tables'}</span></p>
+          </div>
+        </div>
+
+        <div className="bg-gray-800/40 p-4 md:p-6 rounded-xl border border-purple-600/30 flex items-center gap-3 md:gap-4">
+          <div className="w-10 h-10 md:w-12 md:h-12 bg-purple-900/50 rounded-full flex items-center justify-center shrink-0">
+            <span className="text-lg md:text-xl">👥</span>
+          </div>
+          <div>
+            <p className="text-gray-400 text-xs md:text-sm">{isThai ? 'ลูกค้า' : 'Customers'}</p>
+            <p className="text-xl md:text-2xl font-bold text-purple-400">{stats.customers} <span className="text-sm md:text-base text-gray-400">{isThai ? 'คน' : 'people'}</span></p>
           </div>
         </div>
       </div>
 
       {/* Filter Buttons */}
-      <div className="flex justify-center gap-3 mb-6 flex-wrap">
-        <button
-          onClick={() => setStatusFilter(null)}
-          className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
-            statusFilter === null
-              ? 'bg-red-600 text-white'
-              : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-          }`}
-        >
-          <Filter className="w-4 h-4 inline mr-2" />
-          {isThai ? 'ทั้งหมด' : 'All'}
-        </button>
-        <button
-          onClick={() => setStatusFilter('Available')}
-          className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
-            statusFilter === 'Available'
-              ? 'bg-green-600 text-white'
-              : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-          }`}
-        >
-          {isThai ? 'ว่าง' : 'Available'}
-        </button>
-        <button
-          onClick={() => setStatusFilter('Open')}
-          className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
-            statusFilter === 'Open'
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-          }`}
-        >
-          {isThai ? 'เปิด' : 'Open'}
-        </button>
+      <div className="bg-gray-800/40 p-3 md:p-4 rounded-xl border border-gray-700 mb-6 md:mb-8">
+        <div className="flex gap-2 md:gap-3 overflow-x-auto">
+          <button
+            onClick={() => setStatusFilter(null)}
+            className={`px-4 py-2.5 md:py-2 rounded-lg font-medium transition-colors whitespace-nowrap flex items-center gap-2 ${
+              statusFilter === null
+                ? 'bg-red-600 text-white'
+                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+            }`}
+          >
+            <Filter className="w-4 h-4" />
+            {isThai ? 'ทั้งหมด' : 'All'} ({stats.total})
+          </button>
+          <button
+            onClick={() => setStatusFilter('Available')}
+            className={`px-4 py-2.5 md:py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
+              statusFilter === 'Available'
+                ? 'bg-green-600 text-white'
+                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+            }`}
+          >
+            ✅ {isThai ? 'ว่าง' : 'Available'} ({stats.available})
+          </button>
+          <button
+            onClick={() => setStatusFilter('Open')}
+            className={`px-4 py-2.5 md:py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
+              statusFilter === 'Open'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+            }`}
+          >
+            👥 {isThai ? 'เปิดอยู่' : 'Open'} ({stats.open})
+          </button>
+        </div>
       </div>
 
       {/* Table Grid */}
