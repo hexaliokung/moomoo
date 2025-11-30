@@ -11,49 +11,90 @@ class TableNode {
   constructor(tableData) {
     this.data = tableData;
     this.next = null;
+    this.prev = null; // Doubly linked for easier manipulation
   }
 }
 
 /**
- * Linked List for Active Tables
+ * Linked List for Active Tables - Sorted by Time Remaining (ascending)
+ * โต๊ะที่เหลือเวลาน้อยจะอยู่ด้านหน้า
  */
 class ActiveTablesLinkedList {
   constructor() {
     this.head = null;
+    this.tail = null;
     this.size = 0;
   }
 
-  // Add table to the end of the list
-  append(tableData) {
+  // Insert table in sorted order (by diningTimeRemaining, ascending)
+  // โต๊ะที่เหลือเวลาน้อยที่สุดจะอยู่หน้าสุด
+  insertSorted(tableData) {
     const newNode = new TableNode(tableData);
-    
+    const timeRemaining = tableData.diningTimeRemaining || 0;
+
+    // Empty list
     if (!this.head) {
       this.head = newNode;
-    } else {
-      let current = this.head;
-      while (current.next) {
-        current = current.next;
-      }
-      current.next = newNode;
+      this.tail = newNode;
+      this.size++;
+      return;
     }
+
+    // Insert at head if smallest time
+    if (timeRemaining <= this.head.data.diningTimeRemaining) {
+      newNode.next = this.head;
+      this.head.prev = newNode;
+      this.head = newNode;
+      this.size++;
+      return;
+    }
+
+    // Insert at tail if largest time
+    if (timeRemaining >= this.tail.data.diningTimeRemaining) {
+      newNode.prev = this.tail;
+      this.tail.next = newNode;
+      this.tail = newNode;
+      this.size++;
+      return;
+    }
+
+    // Find correct position
+    let current = this.head;
+    while (current.next && current.next.data.diningTimeRemaining < timeRemaining) {
+      current = current.next;
+    }
+
+    // Insert after current
+    newNode.next = current.next;
+    newNode.prev = current;
+    if (current.next) {
+      current.next.prev = newNode;
+    }
+    current.next = newNode;
     this.size++;
   }
 
-  // Remove table by table ID (ใช้ _id แทน tableNumber เพื่อความแม่นยำ)
+  // Remove table by table ID
   remove(tableId) {
     if (!this.head) return false;
 
-    // If head node is the one to remove
-    if (this.head.data._id === tableId) {
-      this.head = this.head.next;
-      this.size--;
-      return true;
-    }
-
     let current = this.head;
-    while (current.next) {
-      if (current.next.data._id === tableId) {
-        current.next = current.next.next;
+    while (current) {
+      if (current.data._id === tableId) {
+        // Update prev node
+        if (current.prev) {
+          current.prev.next = current.next;
+        } else {
+          this.head = current.next;
+        }
+
+        // Update next node
+        if (current.next) {
+          current.next.prev = current.prev;
+        } else {
+          this.tail = current.prev;
+        }
+
         this.size--;
         return true;
       }
@@ -62,15 +103,12 @@ class ActiveTablesLinkedList {
     return false;
   }
 
-  // Update table data
+  // Update table data and re-sort if time changed
   update(tableId, newData) {
-    let current = this.head;
-    while (current) {
-      if (current.data._id === tableId) {
-        current.data = { ...current.data, ...newData };
-        return true;
-      }
-      current = current.next;
+    // Remove and re-insert to maintain sort order
+    if (this.remove(tableId)) {
+      this.insertSorted(newData);
+      return true;
     }
     return false;
   }
@@ -92,7 +130,7 @@ class ActiveTablesLinkedList {
     return this.find(tableId) !== null;
   }
 
-  // Convert to array for rendering
+  // Convert to array for rendering (already sorted by time remaining)
   toArray() {
     const arr = [];
     let current = this.head;
@@ -117,7 +155,19 @@ class ActiveTablesLinkedList {
   // Clear all nodes
   clear() {
     this.head = null;
+    this.tail = null;
     this.size = 0;
+  }
+
+  // Debug: Print list order
+  printOrder() {
+    let current = this.head;
+    const order = [];
+    while (current) {
+      order.push(`T${current.data.tableNumber}(${Math.floor(current.data.diningTimeRemaining / 60000)}m)`);
+      current = current.next;
+    }
+    console.log('Table order:', order.join(' -> '));
   }
 }
 
@@ -128,6 +178,7 @@ function ActiveTablesView() {
   const [loading, setLoading] = useState(true);
   const fetchingRef = useRef(false);
   const mountedRef = useRef(true);
+  const [tick, setTick] = useState(0); // For realtime countdown
 
   /**
    * Fetch active tables and their orders
@@ -180,7 +231,7 @@ function ActiveTablesView() {
           if (linkedList.exists(table._id)) {
             linkedList.update(table._id, tableWithOrders);
           } else {
-            linkedList.append(tableWithOrders);
+            linkedList.insertSorted(tableWithOrders);
             console.log(`Added new table: ${table.tableNumber} (${table._id})`);
           }
         } catch (error) {
@@ -196,7 +247,7 @@ function ActiveTablesView() {
           if (linkedList.exists(table._id)) {
             linkedList.update(table._id, tableWithoutOrders);
           } else {
-            linkedList.append(tableWithoutOrders);
+            linkedList.insertSorted(tableWithoutOrders);
           }
         }
       }
@@ -215,6 +266,16 @@ function ActiveTablesView() {
       fetchingRef.current = false;
     }
   }, []);
+
+  /**
+   * Calculate realtime remaining time based on openedAt
+   */
+  const getRealtimeRemaining = (table) => {
+    if (!table.openedAt) return table.diningTimeRemaining || 0;
+    const elapsed = Date.now() - new Date(table.openedAt).getTime();
+    const remaining = 5400000 - elapsed; // 90 minutes = 5400000ms
+    return Math.max(0, remaining);
+  };
 
   /**
    * Format time remaining (milliseconds to MM:SS)
@@ -257,7 +318,7 @@ function ActiveTablesView() {
   };
 
   /**
-   * Poll tables every 3 seconds
+   * Poll tables every 5 seconds & countdown every 1 second
    */
   useEffect(() => {
     mountedRef.current = true;
@@ -265,15 +326,23 @@ function ActiveTablesView() {
     // Initial fetch
     fetchActiveTables();
 
-    // Set up polling interval
-    const interval = setInterval(() => {
+    // Set up polling interval (fetch from server every 5 seconds)
+    const fetchInterval = setInterval(() => {
       fetchActiveTables();
-    }, 3000);
+    }, 5000);
+
+    // Countdown tick every 1 second for realtime display
+    const tickInterval = setInterval(() => {
+      if (mountedRef.current) {
+        setTick(t => t + 1);
+      }
+    }, 1000);
 
     // Cleanup function
     return () => {
       mountedRef.current = false;
-      clearInterval(interval);
+      clearInterval(fetchInterval);
+      clearInterval(tickInterval);
     };
   }, [fetchActiveTables]);
 
@@ -370,13 +439,13 @@ function ActiveTablesView() {
                   </div>
                 </div>
 
-                {/* Time Remaining */}
+                {/* Time Remaining - Realtime */}
                 <div className="flex items-center gap-3 bg-gray-900/50 px-6 py-3 rounded-xl border border-gray-700">
                   <Clock className="w-6 h-6 text-gray-400" />
                   <div className="text-center">
                     <p className="text-xs text-gray-400">{isThai ? 'เวลาที่เหลือ' : 'Time Left'}</p>
-                    <p className={`text-2xl font-mono font-bold ${getTimeColor(table.diningTimeRemaining)}`}>
-                      {formatTimeRemaining(table.diningTimeRemaining)}
+                    <p className={`text-2xl font-mono font-bold ${getTimeColor(getRealtimeRemaining(table))}`}>
+                      {formatTimeRemaining(getRealtimeRemaining(table))}
                     </p>
                   </div>
                 </div>
@@ -445,7 +514,7 @@ function ActiveTablesView() {
               </div>
 
               {/* Warning if time is running out */}
-              {table.diningTimeRemaining <= 900000 && table.diningTimeRemaining > 0 && (
+              {getRealtimeRemaining(table) <= 900000 && getRealtimeRemaining(table) > 0 && (
                 <div className="mt-4 bg-yellow-900/30 border border-yellow-500 rounded-lg p-3 flex items-center">
                   <AlertCircle className="w-5 h-5 text-yellow-400 mr-2" />
                   <p className="text-sm text-yellow-400 font-semibold">
@@ -455,7 +524,7 @@ function ActiveTablesView() {
               )}
 
               {/* Overtime Warning */}
-              {table.diningTimeRemaining <= 0 && (
+              {getRealtimeRemaining(table) <= 0 && (
                 <div className="mt-4 bg-red-900/30 border border-red-500 rounded-lg p-3 flex items-center">
                   <AlertCircle className="w-5 h-5 text-red-400 mr-2" />
                   <p className="text-sm text-red-400 font-semibold">
@@ -470,7 +539,7 @@ function ActiveTablesView() {
 
       {/* Linked List Info */}
       <div className="mt-8 text-center text-gray-500 text-sm">
-        <p>{isThai ? 'ใช้ Linked List Structure สำหรับการจัดการโต๊ะ' : 'Using Linked List Structure for Table Management'}</p>
+        <p>{isThai ? 'ใช้ Doubly Linked List เรียงตามเวลาที่เหลือ (น้อย → มาก)' : 'Using Doubly Linked List sorted by Time Remaining (Low → High)'}</p>
         <p>{isThai ? 'ขนาดรายการ' : 'List Size'}: {tablesLinkedListRef.current.size} {isThai ? 'โหนด' : 'nodes'}</p>
       </div>
     </div>

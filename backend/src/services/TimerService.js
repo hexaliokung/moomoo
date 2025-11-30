@@ -24,12 +24,12 @@ class TimerService {
    * Check dining timers and warn when approaching 90 minutes
    */
   async checkDiningTimers() {
-    const openTables = await Table.find({ status: "Open" });
+    const openTables = Table.findByStatus("Open");
 
     for (const table of openTables) {
       if (!table.openedAt) continue;
 
-      const elapsed = Date.now() - table.openedAt.getTime();
+      const elapsed = Date.now() - new Date(table.openedAt).getTime();
       const remaining = 5400000 - elapsed; // 90 minutes = 5400000ms
 
       // Warning at 10 minutes remaining (5 minutes before expiry)
@@ -65,12 +65,13 @@ class TimerService {
    * Check reservation timers and auto-release expired reservations
    */
   async checkReservationTimers() {
-    const reservedTables = await Table.find({ status: "Reserved" });
+    const reservedTables = Table.findByStatus("Reserved");
 
     for (const table of reservedTables) {
       if (!table.reservationExpiresAt) continue;
 
-      const remaining = table.reservationExpiresAt.getTime() - Date.now();
+      const remaining =
+        new Date(table.reservationExpiresAt).getTime() - Date.now();
 
       // Auto-release expired reservations
       if (remaining <= 0) {
@@ -112,7 +113,7 @@ class TimerService {
    * @returns {Promise<Array>} Array of table timer statuses
    */
   async getTimerStatuses() {
-    const tables = await Table.find().sort({ tableNumber: 1 });
+    const tables = Table.findAll();
 
     return tables.map((table) => {
       const status = {
@@ -126,7 +127,7 @@ class TimerService {
 
       // Calculate dining timer
       if (table.status === "Open" && table.openedAt) {
-        const elapsed = Date.now() - table.openedAt.getTime();
+        const elapsed = Date.now() - new Date(table.openedAt).getTime();
         const remaining = 5400000 - elapsed;
 
         status.diningTimeRemaining = remaining;
@@ -136,7 +137,8 @@ class TimerService {
 
       // Calculate reservation timer
       if (table.status === "Reserved" && table.reservationExpiresAt) {
-        const remaining = table.reservationExpiresAt.getTime() - Date.now();
+        const remaining =
+          new Date(table.reservationExpiresAt).getTime() - Date.now();
 
         status.reservationTimeRemaining = Math.max(0, remaining);
         status.isExpiringSoon = remaining > 0 && remaining <= 300000; // 5 min warning

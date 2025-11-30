@@ -1,15 +1,18 @@
 import express from "express";
-import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
+
+// Import database (this initializes SQLite)
+import "./config/database.js";
+
 import orderRoutes from "./routes/orderRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import tableRoutes from "./routes/tableRoutes.js";
 import billRoutes from "./routes/billRoutes.js";
 import menuRoutes from "./routes/menuRoutes.js";
-import reservationRoutes from "./routes/reservationRoutes.js";
+import queueRoutes from "./routes/queueRoutes.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import TimerService from "./services/TimerService.js";
 
@@ -56,6 +59,7 @@ app.get("/", (req, res) => {
     message: "MOOMOO Restaurant API Server",
     version: "1.0.0",
     status: "running",
+    database: "SQLite",
   });
 });
 
@@ -64,28 +68,17 @@ app.use("/api/users", userRoutes);
 app.use("/api/tables", tableRoutes);
 app.use("/api/bills", billRoutes);
 app.use("/api/menu", menuRoutes);
-app.use("/api/reservations", reservationRoutes);
+app.use("/api/queue", queueRoutes);
 
 // Error handling middleware (must be last)
 app.use(errorHandler);
 
-// Connect to MongoDB
-const mongoUri =
-  process.env.MONGODB_URI ||
-  process.env.MONGO_URI ||
-  "mongodb://localhost:27017/moomoo";
-mongoose
-  .connect(mongoUri)
-  .then(() => {
-    console.log("✅ MongoDB Connected");
-    // Initialize timer service after DB connection
-    TimerService.initializeCronJobs();
-  })
-  .catch((err) => {
-    console.error("❌ MongoDB connection error:", err);
-    process.exit(1);
-  });
+// Initialize timer service
+TimerService.initializeCronJobs();
 
 // Start server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`📦 Using SQLite database`);
+});

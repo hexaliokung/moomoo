@@ -1,5 +1,5 @@
 import Bill from "../models/Bill.js";
-import TableService from "./TableService.js";
+import Table from "../models/Table.js";
 
 /**
  * Calculate VAT breakdown from total (7% VAT included in prices)
@@ -30,10 +30,7 @@ class BillingService {
     buffetPricePerPerson
   ) {
     // Check for existing active bill
-    const existingBill = await Bill.findOne({
-      tableNumber,
-      status: "Active",
-    });
+    const existingBill = Bill.findActiveByTable(tableNumber);
 
     if (existingBill) {
       throw new Error(`Active bill already exists for table ${tableNumber}`);
@@ -46,25 +43,21 @@ class BillingService {
     const { preVatSubtotal, vatAmount } = calculateVAT(buffetCharges);
 
     // Create bill
-    const bill = new Bill({
+    const bill = Bill.create({
       tableNumber,
       customerCount,
       buffetTier,
       buffetPricePerPerson,
       buffetCharges,
-      specialItems: [],
       specialItemsTotal: 0,
       total: buffetCharges,
       preVatSubtotal,
       vatAmount,
-      paymentMethod: "Unpaid",
       status: "Active",
     });
 
-    await bill.save();
-
     // Update table's currentBill reference
-    await TableService.setCurrentBill(tableNumber, bill._id);
+    Table.update(tableNumber, { currentBillId: bill._id });
 
     return bill;
   }
@@ -75,22 +68,18 @@ class BillingService {
    * @returns {Promise<Object|null>} Active bill or null if not found
    */
   async getActiveBillForTable(tableNumber) {
-    const bill = await Bill.findOne({
-      tableNumber,
-      status: "Active",
-    });
-
+    const bill = Bill.findActiveByTable(tableNumber);
     // Return null instead of throwing error - this is a valid state
     return bill;
   }
 
   /**
    * Get bill by ID
-   * @param {string} billId - Bill MongoDB ObjectId
+   * @param {string|number} billId - Bill ID
    * @returns {Promise<Object>} Bill
    */
   async getBillById(billId) {
-    const bill = await Bill.findById(billId);
+    const bill = Bill.findById(billId);
 
     if (!bill) {
       throw new Error("Bill not found");
@@ -107,38 +96,21 @@ class BillingService {
   async getHistoricalBills(filters = {}) {
     const { tableNumber, startDate, endDate, limit = 50, page = 1 } = filters;
 
-    const query = { status: "Archived" };
+    const queryFilters = { status: "Archived" };
 
     if (tableNumber) {
-      query.tableNumber = parseInt(tableNumber);
+      queryFilters.tableNumber = parseInt(tableNumber);
     }
 
-    if (startDate || endDate) {
-      query.archivedAt = {};
-      if (startDate) {
-        const start = new Date(startDate);
-        start.setHours(0, 0, 0, 0); // Start of day
-        query.archivedAt.$gte = start;
-      }
-      if (endDate) {
-        const end = new Date(endDate);
-        end.setHours(23, 59, 59, 999); // End of day
-        query.archivedAt.$lte = end;
-      }
-    }
+    const offset = (page - 1) * limit;
 
-    const skip = (page - 1) * limit;
+    const bills = Bill.findAll({
+      ...queryFilters,
+      limit,
+      offset,
+    });
 
-    const [bills, total] = await Promise.all([
-      Bill.find(query)
-        .sort({ archivedAt: -1 })
-        .limit(limit)
-        .skip(skip)
-        .select(
-          "tableNumber customerCount buffetTier buffetCharges specialItemsTotal total preVatSubtotal vatAmount status createdAt archivedAt"
-        ),
-      Bill.countDocuments(query),
-    ]);
+    const total = Bill.count(queryFilters);
 
     return {
       data: bills,
@@ -153,12 +125,12 @@ class BillingService {
 
   /**
    * Add special menu item to bill
-   * @param {string} billId - Bill MongoDB ObjectId
+   * @param {string|number} billId - Bill ID
    * @param {Object} item - Item details
    * @returns {Promise<Object>} Updated bill
    */
   async addItemToBill(billId, item) {
-    const bill = await Bill.findById(billId);
+    const bill = Bill.findById(billId);
 
     if (!bill) {
       throw new Error("Bill not found");
@@ -171,41 +143,24 @@ class BillingService {
     // Calculate subtotal
     const subtotal = item.price * item.quantity;
 
-    // Add item to specialItems
-    bill.specialItems.push({
-      menuItem: item.menuItem,
+    // Add item to bill
+    return Bill.addSpecialItem(billId, {
+      menuItemId: item.menuItem,
       nameThai: item.nameThai,
       nameEnglish: item.nameEnglish,
       price: item.price,
       quantity: item.quantity,
       subtotal,
     });
-
-    // Recalculate totals
-    bill.specialItemsTotal = bill.specialItems.reduce(
-      (sum, item) => sum + item.subtotal,
-      0
-    );
-    bill.total = bill.buffetCharges + bill.specialItemsTotal;
-
-    // Recalculate VAT
-    const { preVatSubtotal, vatAmount } = calculateVAT(bill.total);
-    bill.preVatSubtotal = preVatSubtotal;
-    bill.vatAmount = vatAmount;
-
-    await bill.save();
-
-    return bill;
   }
 
   /**
    * Archive a bill (mark as paid and close)
-   * @param {string} billId - Bill MongoDB ObjectId
-   * @param {string} paymentMethod - Payment method used
+   * @param {string|number} billId - Bill ID
    * @returns {Promise<Object>} Archived bill
    */
   async archiveBill(billId) {
-    const bill = await Bill.findById(billId);
+    const bill = Bill.findById(billId);
 
     if (!bill) {
       throw new Error("Bill not found");
@@ -216,12 +171,7 @@ class BillingService {
     }
 
     // Archive bill
-    bill.status = "Archived";
-    bill.archivedAt = new Date();
-
-    await bill.save();
-
-    return bill;
+    return Bill.archive(billId);
   }
 
   /**
@@ -231,6 +181,10 @@ class BillingService {
    */
   async getPrintableBill(tableNumber) {
     const bill = await this.getActiveBillForTable(tableNumber);
+
+    if (!bill) {
+      throw new Error("No active bill found for this table");
+    }
 
     // Format items for printing
     const items = [];
@@ -269,7 +223,6 @@ class BillingService {
           amount: bill.vatAmount,
         },
         total: bill.total,
-        paymentMethod: bill.paymentMethod,
       },
     };
   }

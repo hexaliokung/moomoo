@@ -1,220 +1,192 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, Users, Phone, Trash2, CheckCircle2, AlertCircle } from 'lucide-react';
-import reservationService from '@/services/reservationService';
+import { Clock, Users, Phone, UtensilsCrossed, UserPlus } from 'lucide-react';
+import queueService from '@/services/queueService';
+import tableService from '@/services/tableService';
 
 function WaitlistManagement() {
-  const [reservations, setReservations] = useState([]);
+  const [queue, setQueue] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [stats, setStats] = useState({ totalReservations: 0, activeReservations: 0, totalPeopleWaiting: 0 });
+  const [openTablesCount, setOpenTablesCount] = useState(0);
 
-  const [newReservation, setNewReservation] = useState({
+  const [newCustomer, setNewCustomer] = useState({
     customerName: '',
     customerPhone: '',
     partySize: '',
   });
 
-  const [showConvertForm, setShowConvertForm] = useState(null);
-  const [convertData, setConvertData] = useState({
-    customerCount: '',
-    buffetTier: 'Starter',
-  });
-
-  // Fetch reservations and stats on mount
+  // Fetch queue and open tables count on mount
   useEffect(() => {
-    loadReservations();
-    loadStats();
+    loadQueue();
+    loadOpenTablesCount();
 
     // Refresh every 10 seconds
     const interval = setInterval(() => {
-      loadReservations();
-      loadStats();
+      loadQueue();
+      loadOpenTablesCount();
     }, 10000);
 
     return () => clearInterval(interval);
   }, []);
 
-  const loadReservations = async () => {
+  const loadQueue = async () => {
     try {
       setLoading(true);
-      const response = await reservationService.getActiveReservations();
-      setReservations(response.data || []);
+      const response = await queueService.getAllQueue();
+      setQueue(response.data || []);
       setError(null);
     } catch (err) {
-      console.error('Error loading reservations:', err);
-      setError('Failed to load reservations');
+      console.error('Error loading queue:', err);
+      setError('Failed to load queue');
     } finally {
       setLoading(false);
     }
   };
 
-  const loadStats = async () => {
+  const loadOpenTablesCount = async () => {
     try {
-      const response = await reservationService.getWaitlistStats();
-      setStats(response.data || {});
+      const response = await tableService.getTables('Open');
+      const tables = response.data || [];
+      setOpenTablesCount(tables.length);
     } catch (err) {
-      console.error('Error loading stats:', err);
+      console.error('Error loading open tables:', err);
     }
   };
 
-  const handleAddReservation = async (e) => {
+  const handleAddToQueue = async (e) => {
     e.preventDefault();
 
-    if (!newReservation.customerName || !newReservation.partySize) {
+    if (!newCustomer.customerName || !newCustomer.partySize) {
       alert('กรุณากรอกชื่อลูกค้าและจำนวนคน');
       return;
     }
 
-    try {
-      await reservationService.createReservation({
-        customerName: newReservation.customerName,
-        customerPhone: newReservation.customerPhone || '',
-        partySize: parseInt(newReservation.partySize),
-      });
-
-      setNewReservation({ customerName: '', customerPhone: '', partySize: '' });
-      loadReservations();
-      loadStats();
-    } catch (err) {
-      alert('ไม่สามารถเพิ่มการจองได้: ' + err.message);
-    }
-  };
-
-  const handleCancelReservation = async (reservationId) => {
-    if (!confirm('ยืนยันการยกเลิกการจอง?')) return;
-
-    try {
-      await reservationService.cancelReservation(reservationId);
-      loadReservations();
-      loadStats();
-    } catch (err) {
-      alert('ไม่สามารถยกเลิกการจองได้: ' + err.message);
-    }
-  };
-
-  const handleConvertReservation = async (reservationId) => {
-    if (!convertData.customerCount) {
-      alert('กรุณากรอกจำนวนลูกค้า');
+    const partySize = parseInt(newCustomer.partySize);
+    if (partySize < 1 || partySize > 4) {
+      alert('จำนวนคนต้องอยู่ระหว่าง 1-4 คน');
       return;
     }
 
     try {
-      await reservationService.convertToOpenTable(
-        reservationId,
-        parseInt(convertData.customerCount),
-        convertData.buffetTier
-      );
+      await queueService.addToQueue({
+        customerName: newCustomer.customerName,
+        customerPhone: newCustomer.customerPhone || '',
+        partySize: partySize,
+      });
 
-      setShowConvertForm(null);
-      setConvertData({ customerCount: '', buffetTier: 'Starter' });
-      loadReservations();
-      loadStats();
-      alert('เปิดโต๊ะสำเร็จ');
+      setNewCustomer({ customerName: '', customerPhone: '', partySize: '' });
+      loadQueue();
     } catch (err) {
-      alert('ไม่สามารถเปิดโต๊ะได้: ' + err.message);
+      alert('ไม่สามารถเพิ่มคิวได้: ' + err.message);
     }
   };
 
-  const getTimeRemaining = (expiresAt) => {
-    const now = new Date();
-    const expires = new Date(expiresAt);
-    const diff = expires - now;
+  const handleCallNext = async () => {
+    if (queue.length === 0) {
+      alert('ไม่มีลูกค้าในคิว');
+      return;
+    }
 
-    if (diff <= 0) return 'หมดเวลา';
+    const nextCustomer = queue[0];
+    if (!confirm(`เรียกคิวถัดไป: ${nextCustomer.customerName} (${nextCustomer.partySize} คน)?`)) {
+      return;
+    }
 
-    const minutes = Math.floor(diff / 60000);
-    const seconds = Math.floor((diff % 60000) / 1000);
+    try {
+      await queueService.callNext();
+      loadQueue();
+    } catch (err) {
+      alert('ไม่สามารถเรียกคิวได้: ' + err.message);
+    }
+  };
 
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  const formatTime = (dateString) => {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('th-TH', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: false,
+      timeZone: 'Asia/Bangkok'
+    });
   };
 
   return (
-    <div className="p-8 text-white min-h-screen">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold font-serif mb-2">📋 จัดการคิวรอ (การจอง)</h1>
-        <p className="text-gray-400">จัดการการจองโต๊ะและคิวรอ</p>
+    <div className="p-4 md:p-8 text-white min-h-screen">
+      <div className="mb-6 md:mb-8">
+        <h1 className="text-2xl md:text-3xl font-bold font-serif mb-1 md:mb-2">📋 จัดการคิวรอ</h1>
+        <p className="text-gray-400 text-sm md:text-base">จัดการคิวลูกค้าที่รอโต๊ะ</p>
       </div>
 
-      {/* Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <div className="bg-gray-800/40 p-6 rounded-xl border border-gray-700">
-          <div className="flex items-center gap-3">
-            <Clock className="w-8 h-8 text-red-500" />
-            <div>
-              <p className="text-gray-400 text-sm">การจองทั้งหมด</p>
-              <p className="text-2xl font-bold">{stats.totalReservations}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-gray-800/40 p-6 rounded-xl border border-green-600/30">
-          <div className="flex items-center gap-3">
-            <AlertCircle className="w-8 h-8 text-green-500" />
-            <div>
-              <p className="text-gray-400 text-sm">การจองที่ยังใช้ได้</p>
-              <p className="text-2xl font-bold">{stats.activeReservations}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-gray-800/40 p-6 rounded-xl border border-blue-600/30">
-          <div className="flex items-center gap-3">
-            <Users className="w-8 h-8 text-blue-500" />
-            <div>
-              <p className="text-gray-400 text-sm">จำนวนคนที่รอ</p>
-              <p className="text-2xl font-bold">{stats.totalPeopleWaiting}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Add Reservation Form */}
-      <div className="bg-gray-800/40 p-6 rounded-xl border border-gray-700 mb-8">
-        <h2 className="text-xl font-bold mb-4">➕ เพิ่มการจองใหม่</h2>
-        <form onSubmit={handleAddReservation} className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {/* Stats Row */}
+      <div className="grid grid-cols-2 gap-3 md:gap-6 mb-6 md:mb-8">
+        {/* จำนวนโต๊ะที่เปิดอยู่ */}
+        <div className="bg-gray-800/40 p-4 md:p-6 rounded-xl border border-green-600/30 flex items-center gap-3 md:gap-4">
+          <UtensilsCrossed className="w-8 h-8 md:w-10 md:h-10 text-green-500 shrink-0" />
           <div>
+            <p className="text-gray-400 text-xs md:text-sm">โต๊ะที่เปิดอยู่</p>
+            <p className="text-2xl md:text-3xl font-bold text-green-400">{openTablesCount} <span className="text-sm md:text-lg text-gray-400">/ 10</span></p>
+          </div>
+        </div>
+
+        {/* จำนวนคิวที่รอ */}
+        <div className="bg-gray-800/40 p-4 md:p-6 rounded-xl border border-yellow-600/30 flex items-center gap-3 md:gap-4">
+          <Users className="w-8 h-8 md:w-10 md:h-10 text-yellow-500 shrink-0" />
+          <div>
+            <p className="text-gray-400 text-xs md:text-sm">คิวที่รอ</p>
+            <p className="text-2xl md:text-3xl font-bold text-yellow-400">{queue.length} <span className="text-sm md:text-lg text-gray-400">คิว</span></p>
+          </div>
+        </div>
+      </div>
+
+      {/* Add to Queue Form */}
+      <div className="bg-gray-800/40 p-4 md:p-6 rounded-xl border border-gray-700 mb-6 md:mb-8">
+        <h2 className="text-lg md:text-xl font-bold mb-4">➕ เพิ่มคิวใหม่</h2>
+        <form onSubmit={handleAddToQueue} className="space-y-4 md:space-y-0 md:grid md:grid-cols-12 md:gap-4 md:items-end">
+          <div className="md:col-span-4">
             <label className="block text-sm text-gray-300 mb-2">ชื่อลูกค้า *</label>
             <input
               type="text"
-              value={newReservation.customerName}
-              onChange={(e) => setNewReservation({ ...newReservation, customerName: e.target.value })}
-              className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+              value={newCustomer.customerName}
+              onChange={(e) => setNewCustomer({ ...newCustomer, customerName: e.target.value })}
+              className="w-full px-4 py-3 md:py-2.5 bg-gray-700 border border-gray-600 rounded-lg text-white text-base focus:outline-none focus:ring-2 focus:ring-red-500"
               required
               placeholder="เช่น คุณสมชาย"
             />
           </div>
 
-          <div>
-            <label className="block text-sm text-gray-300 mb-2">จำนวนคน *</label>
+          <div className="md:col-span-2">
+            <label className="block text-sm text-gray-300 mb-2">จำนวนคน * (1-4)</label>
             <input
               type="number"
-              value={newReservation.partySize}
-              onChange={(e) => setNewReservation({ ...newReservation, partySize: e.target.value })}
-              className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+              value={newCustomer.partySize}
+              onChange={(e) => setNewCustomer({ ...newCustomer, partySize: e.target.value })}
+              className="w-full px-4 py-3 md:py-2.5 bg-gray-700 border border-gray-600 rounded-lg text-white text-base focus:outline-none focus:ring-2 focus:ring-red-500"
               required
               min="1"
-              max="10"
-              placeholder="เช่น 4"
+              max="4"
+              placeholder="เช่น 2"
             />
           </div>
 
-          <div>
+          <div className="md:col-span-3">
             <label className="block text-sm text-gray-300 mb-2">เบอร์โทร</label>
             <input
               type="tel"
-              value={newReservation.customerPhone}
-              onChange={(e) => setNewReservation({ ...newReservation, customerPhone: e.target.value })}
-              className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+              value={newCustomer.customerPhone}
+              onChange={(e) => setNewCustomer({ ...newCustomer, customerPhone: e.target.value })}
+              className="w-full px-4 py-3 md:py-2.5 bg-gray-700 border border-gray-600 rounded-lg text-white text-base focus:outline-none focus:ring-2 focus:ring-red-500"
               placeholder="เบอร์โทรศัพท์"
             />
           </div>
 
-          <div className="flex items-end">
+          <div className="md:col-span-3">
             <button
               type="submit"
-              className="w-full bg-red-600 hover:bg-red-700 px-6 py-2 rounded-lg font-medium transition-colors"
+              className="w-full bg-red-600 hover:bg-red-700 px-6 py-3 md:py-2.5 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 text-base"
             >
-              เพิ่มการจอง
+              <UserPlus className="w-5 h-5" />
+              เพิ่มคิว
             </button>
           </div>
         </form>
@@ -222,115 +194,122 @@ function WaitlistManagement() {
 
       {/* Error State */}
       {error && (
-        <div className="bg-red-900/30 border border-red-600 p-4 rounded-lg mb-6 text-red-200">
+        <div className="bg-red-900/30 border border-red-600 p-4 rounded-lg mb-6 text-red-200 text-sm md:text-base">
           ⚠️ {error}
         </div>
       )}
 
-      {/* Reservations List */}
-      <div className="bg-gray-800/40 p-6 rounded-xl border border-gray-700">
-        <h2 className="text-xl font-bold mb-4">📝 รายการการจอง</h2>
+      {/* Call Next Button */}
+      {queue.length > 0 && (
+        <div className="mb-6">
+          <button
+            onClick={handleCallNext}
+            className="w-full md:w-auto bg-green-600 hover:bg-green-700 px-6 md:px-8 py-4 md:py-3 rounded-xl font-bold text-base md:text-lg transition-colors flex items-center justify-center md:justify-start gap-3 shadow-lg shadow-green-600/30"
+          >
+            <Users className="w-6 h-6" />
+            <span className="truncate">🔔 เรียกคิวถัดไป: {queue[0]?.customerName} ({queue[0]?.partySize} คน)</span>
+          </button>
+        </div>
+      )}
+
+      {/* Queue List */}
+      <div className="bg-gray-800/40 p-4 md:p-6 rounded-xl border border-gray-700">
+        <h2 className="text-lg md:text-xl font-bold mb-4">📝 รายการคิว</h2>
 
         {loading ? (
           <div className="text-center py-12 text-gray-400">กำลังโหลด...</div>
-        ) : reservations.length === 0 ? (
-          <div className="text-center py-12 text-gray-400">ไม่มีการจองในขณะนี้</div>
+        ) : queue.length === 0 ? (
+          <div className="text-center py-12 text-gray-400">ไม่มีลูกค้าในคิวขณะนี้</div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-900/50 border-b border-gray-700">
-                <tr>
-                  <th className="text-left px-4 py-3 text-gray-300">ลำดับ</th>
-                  <th className="text-left px-4 py-3 text-gray-300">ชื่อลูกค้า</th>
-                  <th className="text-left px-4 py-3 text-gray-300">จำนวนคน</th>
-                  <th className="text-left px-4 py-3 text-gray-300">เบอร์โทร</th>
-                  <th className="text-left px-4 py-3 text-gray-300">เวลาที่เหลือ</th>
-                  <th className="text-right px-4 py-3 text-gray-300">การจัดการ</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-700">
-                {reservations.map((res, idx) => (
-                  <tr key={res._id} className="hover:bg-gray-700/30 transition-colors">
-                    <td className="px-4 py-3">{idx + 1}</td>
-                    <td className="px-4 py-3 font-medium">{res.customerName}</td>
-                    <td className="px-4 py-3">
-                      <span className="flex items-center gap-1">
-                        <Users className="w-4 h-4" /> {res.partySize} คน
+          <>
+            {/* Mobile Card View */}
+            <div className="md:hidden space-y-3">
+              {queue.map((item, idx) => (
+                <div 
+                  key={item._id} 
+                  className={`p-4 rounded-lg transition-colors ${idx === 0 ? 'bg-green-900/30 border-l-4 border-green-500' : 'bg-gray-900/30'}`}
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-center gap-3">
+                      <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-sm ${idx === 0 ? 'bg-green-600 text-white font-bold' : 'bg-gray-700 text-gray-300'}`}>
+                        {idx + 1}
                       </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      {res.customerPhone ? (
-                        <span className="flex items-center gap-1">
-                          <Phone className="w-4 h-4" /> {res.customerPhone}
-                        </span>
-                      ) : (
-                        '-'
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-yellow-400 font-mono">
-                      <Clock className="w-4 h-4 inline mr-1" />
-                      {getTimeRemaining(res.expiresAt)}
-                    </td>
-                    <td className="px-4 py-3 text-right space-x-2">
-                      {showConvertForm === res._id ? (
-                        <div className="bg-gray-900 p-3 rounded border border-gray-600 space-y-2 w-64">
-                          <input
-                            type="number"
-                            placeholder="จำนวนลูกค้า"
-                            value={convertData.customerCount}
-                            onChange={(e) =>
-                              setConvertData({ ...convertData, customerCount: e.target.value })
-                            }
-                            className="w-full px-2 py-1 bg-gray-700 border border-gray-600 rounded text-white text-sm"
-                            min="1"
-                          />
-                          <select
-                            value={convertData.buffetTier}
-                            onChange={(e) =>
-                              setConvertData({ ...convertData, buffetTier: e.target.value })
-                            }
-                            className="w-full px-2 py-1 bg-gray-700 border border-gray-600 rounded text-white text-sm"
-                          >
-                            <option value="Starter">Starter Buffet</option>
-                            <option value="Premium">Premium Buffet</option>
-                          </select>
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => handleConvertReservation(res._id)}
-                              className="flex-1 bg-green-600 hover:bg-green-700 px-2 py-1 rounded text-xs font-medium"
-                            >
-                              ยืนยัน
-                            </button>
-                            <button
-                              onClick={() => setShowConvertForm(null)}
-                              className="flex-1 bg-gray-600 hover:bg-gray-700 px-2 py-1 rounded text-xs font-medium"
-                            >
-                              ยกเลิก
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <>
-                          <button
-                            onClick={() => setShowConvertForm(res._id)}
-                            className="inline-flex items-center gap-1 bg-green-600 hover:bg-green-700 px-3 py-1 rounded text-xs font-medium transition-colors"
-                          >
-                            <CheckCircle2 className="w-4 h-4" /> เปิดโต๊ะ
-                          </button>
-                          <button
-                            onClick={() => handleCancelReservation(res._id)}
-                            className="inline-flex items-center gap-1 bg-red-600/70 hover:bg-red-600 px-3 py-1 rounded text-xs font-medium transition-colors"
-                          >
-                            <Trash2 className="w-4 h-4" /> ยกเลิก
-                          </button>
-                        </>
-                      )}
-                    </td>
+                      <div>
+                        <p className="font-medium text-white">
+                          {item.customerName}
+                          {idx === 0 && <span className="ml-2 text-green-400 text-xs">(คิวถัดไป)</span>}
+                        </p>
+                        <p className="text-sm text-gray-400 flex items-center gap-1 mt-1">
+                          <Users className="w-3 h-3" /> {item.partySize} คน
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between text-sm text-gray-400 mt-3 pt-3 border-t border-gray-700">
+                    <span className="flex items-center gap-1">
+                      <Phone className="w-3 h-3" /> 
+                      {item.customerPhone || '-'}
+                    </span>
+                    <span className="flex items-center gap-1 text-blue-400 font-mono">
+                      <Clock className="w-3 h-3" />
+                      {formatTime(item.createdAt)}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-sm table-fixed">
+                <thead className="bg-gray-900/50 border-b border-gray-700">
+                  <tr>
+                    <th className="text-left px-4 py-3 text-gray-300 w-20">ลำดับ</th>
+                    <th className="text-left px-4 py-3 text-gray-300 w-1/3">ชื่อลูกค้า</th>
+                    <th className="text-left px-4 py-3 text-gray-300 w-28">จำนวนคน</th>
+                    <th className="text-left px-4 py-3 text-gray-300 w-1/4">เบอร์โทร</th>
+                    <th className="text-left px-4 py-3 text-gray-300 w-36">เวลาที่เริ่มจอง</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-gray-700">
+                  {queue.map((item, idx) => (
+                    <tr 
+                      key={item._id} 
+                      className={`transition-colors ${idx === 0 ? 'bg-green-900/20 border-l-4 border-green-500' : 'hover:bg-gray-700/30'}`}
+                    >
+                      <td className="px-4 py-3">
+                        <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full ${idx === 0 ? 'bg-green-600 text-white font-bold' : 'bg-gray-700 text-gray-300'}`}>
+                          {idx + 1}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 font-medium">
+                        {item.customerName}
+                        {idx === 0 && <span className="ml-2 text-green-400 text-xs">(คิวถัดไป)</span>}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="flex items-center gap-1">
+                          <Users className="w-4 h-4" /> {item.partySize} คน
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        {item.customerPhone ? (
+                          <span className="flex items-center gap-1">
+                            <Phone className="w-4 h-4" /> {item.customerPhone}
+                          </span>
+                        ) : (
+                          '-'
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-blue-400 font-mono">
+                        <Clock className="w-4 h-4 inline mr-1" />
+                        {formatTime(item.createdAt)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
     </div>

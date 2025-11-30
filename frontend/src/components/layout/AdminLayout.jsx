@@ -1,19 +1,16 @@
 import React from "react";
 import { NavLink, Outlet } from "react-router-dom";
-import { Flame, Settings, Users, ShoppingCart, FileText, Clock, ArrowLeft, Globe } from "lucide-react";
+import { Flame, Settings, Users, ShoppingCart, FileText, Clock, ArrowLeft } from "lucide-react";
 
 import background from "@/assets/background.png";
-import { useBilingual } from "@/hook/useBilingual";
 
 const AdminLayout = () => {
-  const { language, toggleLanguage, t } = useBilingual();
-
   const adminMenuItems = [
-    { name: t("admin.menu"), path: "/admin/menu", icon: FileText },
-    { name: t("admin.queue"), path: "/admin/orders", icon: ShoppingCart },
-    { name: t("admin.tables"), path: "/admin/tables", icon: Users },
-    { name: t("admin.billing"), path: "/admin/billing", icon: Settings },
-    { name: t("admin.waitlist"), path: "/admin/waitlist", icon: Clock },
+    { name: "จัดการเมนู", path: "/admin/menu", icon: FileText },
+    { name: "คิวออเดอร์", path: "/admin/orders", icon: ShoppingCart },
+    { name: "จัดการโต๊ะ", path: "/admin/tables", icon: Users },
+    { name: "บิลและการเงิน", path: "/admin/billing", icon: Settings },
+    { name: "รายการรอ", path: "/admin/waitlist", icon: Clock },
   ];
 
   return (
@@ -39,7 +36,9 @@ const AdminLayout = () => {
                   <Flame className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-xl font-serif font-bold text-white">{t("app.name")}</h1>
+                  <h1 className="text-2xl font-serif font-bold">
+                    <span className="text-red-600">m</span><span className="text-white">oo</span><span className="text-red-600">m</span><span className="text-white">oo</span>
+                  </h1>
                   <p className="text-xs text-red-400">Admin Panel</p>
                 </div>
               </div>
@@ -67,25 +66,14 @@ const AdminLayout = () => {
                 })}
               </div>
 
-              {/* Language Toggle & Back to Store */}
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={toggleLanguage}
-                  className="flex items-center px-3 py-2 bg-gray-800 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg font-medium transition-all duration-300 border border-gray-700 hover:border-gray-600"
-                  title="Toggle Language"
-                >
-                  <Globe className="w-4 h-4 mr-2" />
-                  <span className="text-sm">{language.toUpperCase()}</span>
-                </button>
-
-                <NavLink
-                  to="/"
-                  className="flex items-center px-4 py-2 bg-gray-800 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg font-medium transition-all duration-300 border border-gray-700 hover:border-gray-600"
-                >
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  {language === 'th' ? 'กลับหน้าร้าน' : 'Back to Store'}
-                </NavLink>
-              </div>
+              {/* Back to Store */}
+              <NavLink
+                to="/"
+                className="flex items-center px-4 py-2 bg-gray-800 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg font-medium transition-all duration-300 border border-gray-700 hover:border-gray-600"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                กลับหน้าร้าน
+              </NavLink>
             </div>
 
             {/* Mobile Menu */}
@@ -127,7 +115,7 @@ const AdminLayout = () => {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <div className="text-center">
               <p className="text-gray-400 text-sm">
-                © 2024 มูคระทา Admin Panel | All rights reserved
+                © 2024 moomoo Admin Panel | All rights reserved
               </p>
             </div>
           </div>

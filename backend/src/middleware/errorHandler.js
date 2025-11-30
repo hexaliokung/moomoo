@@ -1,4 +1,10 @@
 export const errorHandler = (err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ message: "Something went wrong!" });
+  console.error("❌ Error:", err.message);
+  console.error("Stack:", err.stack);
+
+  const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
+  res.status(statusCode).json({
+    message: err.message || "Something went wrong!",
+    stack: process.env.NODE_ENV === "production" ? null : err.stack,
+  });
 };

@@ -27,7 +27,7 @@ class TableService {
    * @returns {Promise<Object>} Updated table with bill reference
    */
   async openTable(tableNumber, customerCount, buffetTier) {
-    const table = await Table.findOne({ tableNumber });
+    const table = Table.findByNumber(tableNumber);
 
     if (!table) {
       throw new Error("Table not found");
@@ -53,25 +53,23 @@ class TableService {
     // Determine buffet price
     const buffetPrice = buffetTier === "Starter" ? 259 : 299;
 
-    // Clear any existing bill reference first (safety check)
-    table.currentBill = null;
-
     // Generate PIN and encrypted ID
     const pin = generatePIN();
     const encryptedId = encryptTableId(tableNumber);
 
     // Update table
-    table.status = "Open";
-    table.customerCount = customerCount;
-    table.buffetTier = buffetTier;
-    table.buffetPrice = buffetPrice;
-    table.openedAt = new Date();
-    table.reservedAt = null;
-    table.reservationExpiresAt = null;
-    table.pin = pin;
-    table.encryptedId = encryptedId;
-
-    await table.save();
+    Table.update(tableNumber, {
+      status: "Open",
+      customerCount,
+      buffetTier,
+      buffetPrice,
+      openedAt: new Date(),
+      reservedAt: null,
+      reservationExpiresAt: null,
+      pin,
+      encryptedId,
+      currentBillId: null,
+    });
 
     // Create bill for the table
     const bill = await BillingService.createBillForTable(
@@ -82,10 +80,11 @@ class TableService {
     );
 
     // Update table with bill reference
-    table.currentBill = bill._id;
-    await table.save();
+    const updatedTable = Table.update(tableNumber, {
+      currentBillId: bill._id,
+    });
 
-    return table;
+    return updatedTable;
   }
 
   /**
@@ -95,7 +94,7 @@ class TableService {
    * @returns {Promise<Object>} Updated table with reservation timestamps
    */
   async reserveTable(tableNumber, notes = "") {
-    const table = await Table.findOne({ tableNumber });
+    const table = Table.findByNumber(tableNumber);
 
     if (!table) {
       throw new Error("Table not found");
@@ -112,14 +111,13 @@ class TableService {
     const now = new Date();
     const expiresAt = new Date(now.getTime() + 15 * 60 * 1000); // 15 minutes
 
-    table.status = "Reserved";
-    table.reservedAt = now;
-    table.reservationExpiresAt = expiresAt;
-    table.reservationNotes = notes;
+    const updatedTable = Table.update(tableNumber, {
+      status: "Reserved",
+      reservedAt: now,
+      reservationExpiresAt: expiresAt,
+    });
 
-    await table.save();
-
-    return table;
+    return updatedTable;
   }
 
   /**
@@ -128,7 +126,7 @@ class TableService {
    * @returns {Promise<Object>} Updated table (Available status)
    */
   async cancelReservation(tableNumber) {
-    const table = await Table.findOne({ tableNumber });
+    const table = Table.findByNumber(tableNumber);
 
     if (!table) {
       throw new Error("Table not found");
@@ -142,25 +140,23 @@ class TableService {
     }
 
     // Clear reservation data
-    table.status = "Available";
-    table.reservedAt = null;
-    table.reservationExpiresAt = null;
-    table.reservationNotes = null;
+    const updatedTable = Table.update(tableNumber, {
+      status: "Available",
+      reservedAt: null,
+      reservationExpiresAt: null,
+    });
 
-    await table.save();
-
-    return table;
+    return updatedTable;
   }
 
   /**
    * Close a table after payment
    * This will archive the bill and immediately reset the table to Available status
    * @param {number} tableNumber - Table number (1-10)
-   * @param {string} paymentMethod - Payment method used
    * @returns {Promise<Object>} Updated table and archived bill info
    */
   async closeTable(tableNumber) {
-    const table = await Table.findOne({ tableNumber });
+    const table = Table.findByNumber(tableNumber);
 
     if (!table) {
       throw new Error("Table not found");
@@ -172,7 +168,7 @@ class TableService {
     }
 
     // Save bill reference and usage history
-    const archivedBillId = table.currentBill;
+    const archivedBillId = table.currentBillId;
     const sessionHistory = {
       openedAt: table.openedAt,
       closedAt: new Date(),
@@ -195,24 +191,23 @@ class TableService {
     }
 
     // Reset table to Available status immediately (ready for next customer)
-    table.status = "Available";
-    table.customerCount = 0;
-    table.buffetTier = "None";
-    table.buffetPrice = 0;
-    table.openedAt = null;
-    table.closedAt = null;
-    table.reservedAt = null;
-    table.reservationExpiresAt = null;
-    table.reservationNotes = null;
-    table.currentBill = null;
-    table.pin = null;
-    table.encryptedId = null;
-    table.diningTimeRemaining = 5400000; // Reset to 90 minutes
-
-    await table.save();
+    const updatedTable = Table.update(tableNumber, {
+      status: "Available",
+      customerCount: 0,
+      buffetTier: "None",
+      buffetPrice: 0,
+      openedAt: null,
+      closedAt: null,
+      reservedAt: null,
+      reservationExpiresAt: null,
+      currentBillId: null,
+      pin: null,
+      encryptedId: null,
+      diningTimeRemaining: 5400000, // Reset to 90 minutes
+    });
 
     return {
-      table,
+      table: updatedTable,
       archivedBillId,
       sessionHistory,
       message: `Table ${tableNumber} is now available for next customer. Session history saved.`,
@@ -225,16 +220,15 @@ class TableService {
    * @returns {Promise<Array>} Array of tables with calculated fields
    */
   async getAllTables(status = null) {
-    const query = status ? { status } : {};
-    const tables = await Table.find(query).sort({ tableNumber: 1 });
+    const tables = Table.findAll(status);
 
     // Add calculated fields
     return tables.map((table) => {
-      const tableObj = table.toObject();
+      const tableObj = { ...table };
 
       // Calculate dining time remaining (90 minutes = 5400000ms)
       if (table.status === "Open" && table.openedAt) {
-        const elapsed = Date.now() - table.openedAt.getTime();
+        const elapsed = Date.now() - new Date(table.openedAt).getTime();
         tableObj.diningTimeRemaining = Math.max(0, 5400000 - elapsed);
       } else {
         tableObj.diningTimeRemaining = 5400000;
@@ -244,7 +238,7 @@ class TableService {
       if (table.status === "Reserved" && table.reservationExpiresAt) {
         tableObj.reservationTimeRemaining = Math.max(
           0,
-          table.reservationExpiresAt.getTime() - Date.now()
+          new Date(table.reservationExpiresAt).getTime() - Date.now()
         );
       }
 
@@ -258,17 +252,17 @@ class TableService {
    * @returns {Promise<Object>} Table with calculated fields
    */
   async getTableByNumber(tableNumber) {
-    const table = await Table.findOne({ tableNumber });
+    const table = Table.findByNumber(tableNumber);
 
     if (!table) {
       throw new Error("Table not found");
     }
 
-    const tableObj = table.toObject();
+    const tableObj = { ...table };
 
     // Calculate dining time remaining
     if (table.status === "Open" && table.openedAt) {
-      const elapsed = Date.now() - table.openedAt.getTime();
+      const elapsed = Date.now() - new Date(table.openedAt).getTime();
       tableObj.diningTimeRemaining = Math.max(0, 5400000 - elapsed);
     } else {
       tableObj.diningTimeRemaining = 5400000;
@@ -278,7 +272,7 @@ class TableService {
     if (table.status === "Reserved" && table.reservationExpiresAt) {
       tableObj.reservationTimeRemaining = Math.max(
         0,
-        table.reservationExpiresAt.getTime() - Date.now()
+        new Date(table.reservationExpiresAt).getTime() - Date.now()
       );
     }
 
@@ -288,20 +282,17 @@ class TableService {
   /**
    * Set current bill for a table
    * @param {number} tableNumber - Table number
-   * @param {string} billId - Bill MongoDB ObjectId
+   * @param {number} billId - Bill ID
    * @returns {Promise<Object>} Updated table
    */
   async setCurrentBill(tableNumber, billId) {
-    const table = await Table.findOne({ tableNumber });
+    const table = Table.findByNumber(tableNumber);
 
     if (!table) {
       throw new Error("Table not found");
     }
 
-    table.currentBill = billId;
-    await table.save();
-
-    return table;
+    return Table.update(tableNumber, { currentBillId: billId });
   }
 
   /**
@@ -311,7 +302,7 @@ class TableService {
    * @returns {Promise<Object>} Verification result with encryptedId if valid
    */
   async verifyPIN(tableNumber, pin) {
-    const table = await Table.findOne({ tableNumber });
+    const table = Table.findByNumber(tableNumber);
 
     if (!table) {
       throw new Error("Table not found");

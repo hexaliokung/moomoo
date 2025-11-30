@@ -16,7 +16,7 @@ class OrderService {
    */
   async placeOrder(tableNumber, items, notes = "") {
     // Validate table exists and is open
-    const table = await Table.findOne({ tableNumber });
+    const table = Table.findByNumber(tableNumber);
     if (!table) {
       throw new Error(`Table ${tableNumber} not found`);
     }
@@ -82,14 +82,7 @@ class OrderService {
    * @returns {Array} Orders sorted by FIFO (createdAt ascending)
    */
   async getQueueOrders(queueType) {
-    const orders = await Order.find({
-      queueType,
-      status: "Pending",
-    })
-      .sort({ createdAt: 1 }) // FIFO - oldest first
-      .lean();
-
-    return orders;
+    return Order.findByQueue(queueType, "Pending");
   }
 
   /**
@@ -114,20 +107,16 @@ class OrderService {
    * @returns {Array} Orders for the table
    */
   async getTableOrders(tableNumber) {
-    const orders = await Order.find({ tableNumber })
-      .sort({ createdAt: -1 }) // Newest first
-      .lean();
-
-    return orders;
+    return Order.findByTable(tableNumber);
   }
 
   /**
    * Mark an order as completed
-   * @param {String} orderId - Order ID
+   * @param {String|Number} orderId - Order ID
    * @returns {Object} Updated order
    */
   async completeOrder(orderId) {
-    const order = await Order.findById(orderId);
+    const order = Order.findById(orderId);
 
     if (!order) {
       throw new Error("Order not found");
@@ -137,11 +126,7 @@ class OrderService {
       throw new Error("Order is already completed");
     }
 
-    order.status = "Completed";
-    order.completedAt = new Date();
-    await order.save();
-
-    return order;
+    return Order.complete(orderId);
   }
 
   /**
@@ -150,15 +135,7 @@ class OrderService {
    * @returns {Array} Completed orders with special items only
    */
   async getCompletedOrdersForBilling(tableNumber) {
-    const orders = await Order.find({
-      tableNumber,
-      status: "Completed",
-      queueType: "Special", // Only special items are billed separately
-    })
-      .sort({ completedAt: 1 })
-      .lean();
-
-    return orders;
+    return Order.findCompletedForBilling(tableNumber);
   }
 }
 
