@@ -10,24 +10,13 @@ class MenuService {
    * @param {Boolean} availableOnly - Only return available items
    * @returns {Object} { starter: [], premium: [], special: [] }
    */
-  async getAllMenuItems(availableOnly = false) {
-    return MenuItem.findAll(availableOnly);
-  }
-
-  /**
-   * Get menu items by category
-   * @param {String} category - 'Starter', 'Premium', or 'Special'
-   * @param {Boolean} availableOnly - Only return available items
-   * @returns {Array} Menu items
-   */
-  async getMenuByCategory(category, availableOnly = false) {
-    const validCategories = ["Starter", "Premium", "Special"];
-    if (!validCategories.includes(category)) {
-      throw new Error(
-        `Invalid category. Must be one of: ${validCategories.join(", ")}`
-      );
-    }
-    return MenuItem.findByCategory(category, availableOnly);
+  async getAllMenuItems() {
+    // คืนข้อมูลเมนูทั้งหมด ไม่ใช้ filter
+    const menuItems = await MenuItem.find({}).sort({
+      category: 1,
+      nameEnglish: 1,
+    });
+    return menuItems;
   }
 
   /**
