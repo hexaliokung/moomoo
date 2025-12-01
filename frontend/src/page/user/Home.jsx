@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Clock, MapPin, Phone, Star, ChefHat, Flame } from "lucide-react";
-import { useBilingual } from '@/hook/useBilingual';
 import { encryptTableId } from '@/utils/encryption';
 import menuService from '@/services/menuService';
 import tableService from '@/services/tableService';
 
 function Home() {
   const navigate = useNavigate();
-  const { isThai } = useBilingual();
   const [tableNumber, setTableNumber] = useState('');
   const [pin, setPin] = useState('');
   const [showMenu, setShowMenu] = useState(false);
@@ -75,14 +73,14 @@ function Home() {
           <div className="flex items-center justify-center gap-2 text-gray-400 mb-8">
             <Clock className="w-5 h-5" />
             <p className="text-base">
-              {isThai ? 'เปิดทุกวัน: จ.-ศ. 11:00-22:00 | ส.-อา. 10:00-23:00' : 'Open Daily: Mon-Fri 11:00-22:00 | Sat-Sun 10:00-23:00'}
+              เปิดทุกวัน: จ.-ศ. 11:00-22:00 | ส.-อา. 10:00-23:00
             </p>
           </div>
           
           {/* Location */}
           <div className="max-w-2xl mx-auto mb-6">
             <h3 className="text-xl font-serif font-semibold text-gray-300 mb-3 text-center">
-              {isThai ? 'ตำแหน่งร้าน' : 'Location'}
+              ตำแหน่งร้าน
             </h3>
             
             <div className="rounded-lg overflow-hidden">
@@ -173,7 +171,7 @@ function Home() {
               }}
               className="border-2 border-red-600 text-red-400 hover:bg-red-600 hover:text-white px-8 py-4 rounded-lg font-semibold text-lg transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-red-600/50 animate-pulse"
             >
-              {showMenu ? (isThai ? 'ซ่อนเมนู / Hide Menu' : 'Hide Menu') : (isThai ? 'ดูเมนูทั้งหมด / Full Menu' : 'Full Menu')}
+              {showMenu ? 'ซ่อนเมนู / Hide Menu' : 'ดูเมนูทั้งหมด / Full Menu'}
             </button>
           </div>
 
@@ -182,7 +180,7 @@ function Home() {
             <div className="mt-12 max-w-6xl mx-auto animate-slideDown">
               <div className="bg-gray-900/80 backdrop-blur-md rounded-lg p-6 border border-red-600/30">
                 <h3 className="text-3xl font-serif font-bold text-white mb-6 text-center">
-                  {isThai ? 'รายการเมนูทั้งหมด' : 'Full Menu'}
+                  รายการเมนูทั้งหมด
                 </h3>
 
                 {/* Category Filter Buttons */}
@@ -222,7 +220,7 @@ function Home() {
                 {loading ? (
                   <div className="text-center py-8">
                     <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
-                    <p className="text-gray-400 mt-4">{isThai ? 'กำลังโหลดเมนู...' : 'Loading menu...'}</p>
+                    <p className="text-gray-400 mt-4">กำลังโหลดเมนู...</p>
                   </div>
                 ) : menuData[selectedCategory] && menuData[selectedCategory].length > 0 ? (
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -249,7 +247,7 @@ function Home() {
                               ? 'bg-green-600/20 text-green-400' 
                               : 'bg-red-600/20 text-red-400'
                           }`}>
-                            {item.isAvailable ? (isThai ? 'พร้อมให้บริการ' : 'Available') : (isThai ? 'หมด' : 'Out of Stock')}
+                            {item.isAvailable ? 'พร้อมให้บริการ' : 'หมด'}
                           </span>
                         </div>
                       </div>
@@ -257,7 +255,7 @@ function Home() {
                   </div>
                 ) : (
                   <div className="text-center py-8">
-                    <p className="text-gray-400">{isThai ? 'ไม่พบรายการเมนู' : 'No menu items found'}</p>
+                    <p className="text-gray-400">ไม่พบรายการเมนู</p>
                   </div>
                 )}
               </div>
@@ -282,12 +280,12 @@ function Home() {
           <div className="max-w-md mx-auto">
             <div className="bg-black/50 backdrop-blur-md rounded-lg p-8 border border-red-600/30">
               <label className="block text-white text-lg font-semibold mb-4 text-center">
-                {isThai ? 'กรุณาระบุหมายเลขโต๊ะและรหัส 4 หลัก' : 'Enter Table Number and 4-Digit PIN'}
+                กรุณาระบุหมายเลขโต๊ะและรหัส 4 หลัก
               </label>
               <div className="space-y-4">
                 <div>
                   <label className="block text-gray-400 text-sm mb-2">
-                    {isThai ? 'หมายเลขโต๊ะ' : 'Table Number'}
+                    หมายเลขโต๊ะ
                   </label>
                   <input
                     type="number"
@@ -295,13 +293,13 @@ function Home() {
                     max="10"
                     value={tableNumber}
                     onChange={(e) => setTableNumber(e.target.value)}
-                    placeholder={isThai ? 'โต๊ะที่ 1-10' : 'Table 1-10'}
+                    placeholder="โต๊ะที่ 1-10"
                     className="w-full px-4 py-3 bg-gray-900 text-white border border-red-600/50 rounded-lg focus:outline-none focus:border-red-600 text-center text-xl font-bold"
                   />
                 </div>
                 <div>
                   <label className="block text-gray-400 text-sm mb-2">
-                    {isThai ? 'รหัส 4 หลัก' : '4-Digit PIN'}
+                    รหัส 4 หลัก
                   </label>
                   <input
                     type="text"
@@ -323,22 +321,18 @@ function Home() {
                         if (response.success) {
                           navigate(`/menu/${response.data.encryptedId}`);
                         } else {
-                          alert(isThai ? 'รหัส PIN ไม่ถูกต้อง' : 'Invalid PIN');
+                          alert('รหัส PIN ไม่ถูกต้อง');
                         }
                       } catch (error) {
-                        alert(isThai 
-                          ? 'เกิดข้อผิดพลาด กรุณาลองใหม่' 
-                          : 'Error occurred, please try again');
+                        alert('เกิดข้อผิดพลาด กรุณาลองใหม่');
                       }
                     } else {
-                      alert(isThai 
-                        ? 'กรุณาระบุโต๊ะที่ 1-10 และรหัส 4 หลัก' 
-                        : 'Please enter table 1-10 and 4-digit PIN');
+                      alert('กรุณาระบุโต๊ะที่ 1-10 และรหัส 4 หลัก');
                     }
                   }}
                   className="w-full bg-red-600 hover:bg-red-700 text-white px-6 py-4 rounded-lg font-semibold text-lg transition-all transform hover:scale-105"
                 >
-                  {isThai ? 'เข้าสู่ระบบ' : 'Enter'}
+                  เข้าสู่ระบบ
                 </button>
               </div>
               <p className="text-gray-400 text-sm mt-4 text-center">

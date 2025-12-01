@@ -2,10 +2,8 @@ import React, { useState } from 'react';
 import { LayoutGrid, Eye } from 'lucide-react';
 import TableManagement from './tableManagement';
 import ActiveTablesView from './activeTablesView';
-import { useBilingual } from '../../hook/useBilingual';
 
 function TableManagementWithActive() {
-  const { isThai } = useBilingual();
   const [activeTab, setActiveTab] = useState('management'); // 'management' or 'active'
 
   return (
@@ -22,7 +20,7 @@ function TableManagementWithActive() {
             }`}
           >
             <LayoutGrid className="w-5 h-5 mr-2" />
-            {isThai ? 'จัดการโต๊ะ' : 'Table Management'}
+            จัดการโต๊ะ
           </button>
           <button
             onClick={() => setActiveTab('active')}
@@ -33,7 +31,7 @@ function TableManagementWithActive() {
             }`}
           >
             <Eye className="w-5 h-5 mr-2" />
-            {isThai ? 'โต๊ะที่เปิดอยู่' : 'Active Tables'}
+            โต๊ะที่เปิดอยู่
           </button>
         </div>
       </div>

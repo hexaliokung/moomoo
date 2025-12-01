@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Clock, Users, Utensils, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import tableService from '../../services/tableService';
 import orderService from '../../services/orderService';
-import { useBilingual } from '../../hook/useBilingual';
 
 /**
  * Linked List Node for Table
@@ -172,7 +171,6 @@ class ActiveTablesLinkedList {
 }
 
 function ActiveTablesView() {
-  const { isThai } = useBilingual();
   const tablesLinkedListRef = useRef(new ActiveTablesLinkedList());
   const [tables, setTables] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -314,10 +312,10 @@ function ActiveTablesView() {
    */
   const getStatusBadge = (order) => {
     const statusMap = {
-      Pending: { bg: 'bg-yellow-600', text: isThai ? 'รอทำ' : 'Pending' },
-      'In Progress': { bg: 'bg-blue-600', text: isThai ? 'กำลังทำ' : 'In Progress' },
-      Completed: { bg: 'bg-green-600', text: isThai ? 'เสร็จแล้ว' : 'Completed' },
-      Served: { bg: 'bg-gray-600', text: isThai ? 'เสิร์ฟแล้ว' : 'Served' }
+      Pending: { bg: 'bg-yellow-600', text: 'รอทำ' },
+      'In Progress': { bg: 'bg-blue-600', text: 'กำลังทำ' },
+      Completed: { bg: 'bg-green-600', text: 'เสร็จแล้ว' },
+      Served: { bg: 'bg-gray-600', text: 'เสิร์ฟแล้ว' }
     };
 
     const status = statusMap[order.status] || statusMap.Pending;
@@ -362,7 +360,7 @@ function ActiveTablesView() {
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-red-600 mx-auto mb-4"></div>
-          <p className="text-white text-lg">{isThai ? 'กำลังโหลด...' : 'Loading...'}</p>
+          <p className="text-white text-lg">กำลังโหลด...</p>
         </div>
       </div>
     );
@@ -378,10 +376,10 @@ function ActiveTablesView() {
           </div>
           <div>
             <h1 className="text-4xl md:text-5xl font-serif font-bold text-white">
-              {isThai ? 'โต๊ะที่เปิดอยู่' : 'Active Tables'}
+              โต๊ะที่เปิดอยู่
             </h1>
             <p className="text-red-400 text-lg mt-2">
-              {isThai ? 'รายการออเดอร์และเวลาที่เหลือ' : 'Orders & Time Remaining'}
+              รายการออเดอร์และเวลาที่เหลือ
             </p>
           </div>
         </div>
@@ -390,13 +388,13 @@ function ActiveTablesView() {
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6 max-w-4xl mx-auto">
           <div className="bg-black/50 backdrop-blur-sm border border-blue-600/20 rounded-xl p-4">
             <div className="text-center">
-              <p className="text-gray-400 text-sm">{isThai ? 'โต๊ะที่เปิด' : 'Open Tables'}</p>
+              <p className="text-gray-400 text-sm">โต๊ะที่เปิด</p>
               <p className="text-blue-400 text-3xl font-bold">{tables.length}</p>
             </div>
           </div>
           <div className="bg-black/50 backdrop-blur-sm border border-green-600/20 rounded-xl p-4">
             <div className="text-center">
-              <p className="text-gray-400 text-sm">{isThai ? 'ออเดอร์ทั้งหมด' : 'Total Orders'}</p>
+              <p className="text-gray-400 text-sm">ออเดอร์ทั้งหมด</p>
               <p className="text-green-400 text-3xl font-bold">
                 {tables.reduce((sum, t) => sum + t.orderCount, 0)}
               </p>
@@ -404,7 +402,7 @@ function ActiveTablesView() {
           </div>
           <div className="bg-black/50 backdrop-blur-sm border border-purple-600/20 rounded-xl p-4 col-span-2 md:col-span-1">
             <div className="text-center">
-              <p className="text-gray-400 text-sm">{isThai ? 'ลูกค้าทั้งหมด' : 'Total Customers'}</p>
+              <p className="text-gray-400 text-sm">ลูกค้าทั้งหมด</p>
               <p className="text-purple-400 text-3xl font-bold">
                 {tables.reduce((sum, t) => sum + t.customerCount, 0)}
               </p>
@@ -418,7 +416,7 @@ function ActiveTablesView() {
         <div className="text-center py-12">
           <AlertCircle className="w-16 h-16 text-gray-500 mx-auto mb-4" />
           <p className="text-gray-400 text-xl">
-            {isThai ? 'ไม่มีโต๊ะที่เปิดอยู่' : 'No active tables'}
+            ไม่มีโต๊ะที่เปิดอยู่
           </p>
         </div>
       ) : (
@@ -436,15 +434,15 @@ function ActiveTablesView() {
                   </div>
                   <div>
                     <h3 className="text-2xl font-bold text-white">
-                      {isThai ? 'โต๊ะ' : 'Table'} {table.tableNumber}
+                      โต๊ะ {table.tableNumber}
                     </h3>
                     <div className="flex items-center gap-4 mt-1">
                       <div className="flex items-center text-gray-300">
                         <Users className="w-4 h-4 mr-1" />
-                        <span className="text-sm">{table.customerCount} {isThai ? 'ท่าน' : 'pax'}</span>
+                        <span className="text-sm">{table.customerCount} ท่าน</span>
                       </div>
                       <div className="text-sm text-gray-400">
-                        {table.buffetTier === 'Starter' ? (isThai ? 'ธรรมดา' : 'Starter') : (isThai ? 'พรีเมียม' : 'Premium')} (฿{table.buffetPrice})
+                        {table.buffetTier === 'Starter' ? 'ธรรมดา' : 'พรีเมียม'} (฿{table.buffetPrice})
                       </div>
                     </div>
                   </div>
@@ -454,7 +452,7 @@ function ActiveTablesView() {
                 <div className="flex items-center gap-3 bg-gray-900/50 px-6 py-3 rounded-xl border border-gray-700">
                   <Clock className="w-6 h-6 text-gray-400" />
                   <div className="text-center">
-                    <p className="text-xs text-gray-400">{isThai ? 'เวลาที่เหลือ' : 'Time Left'}</p>
+                    <p className="text-xs text-gray-400">เวลาที่เหลือ</p>
                     <p className={`text-2xl font-mono font-bold ${getTimeColor(getRealtimeRemaining(table))}`}>
                       {formatTimeRemaining(getRealtimeRemaining(table))}
                     </p>
@@ -470,17 +468,17 @@ function ActiveTablesView() {
                 >
                   <h4 className="text-lg font-semibold text-white flex items-center">
                     <Utensils className="w-5 h-5 mr-2 text-red-400" />
-                    {isThai ? 'ออเดอร์' : 'Orders'} 
+                    ออเดอร์ 
                     <span className="ml-2 bg-blue-600 text-white text-sm px-2 py-0.5 rounded-full">
                       {table.orderCount}
                     </span>
                     <span className="ml-2 text-sm text-gray-400 font-normal">
-                      ({table.orders.reduce((sum, o) => sum + o.items.reduce((s, i) => s + i.quantity, 0), 0)} {isThai ? 'รายการ' : 'items'})
+                      ({table.orders.reduce((sum, o) => sum + o.items.reduce((s, i) => s + i.quantity, 0), 0)} รายการ)
                     </span>
                   </h4>
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-gray-400">
-                      {expandedTables[table._id] ? (isThai ? 'ซ่อน' : 'Hide') : (isThai ? 'ดูรายละเอียด' : 'Show details')}
+                      {expandedTables[table._id] ? 'ซ่อน' : 'ดูรายละเอียด'}
                     </span>
                     {expandedTables[table._id] ? (
                       <ChevronUp className="w-5 h-5 text-gray-400" />
@@ -495,7 +493,7 @@ function ActiveTablesView() {
                   <div className="mt-3 space-y-3 animate-in slide-in-from-top-2 duration-200">
                     {table.orders.length === 0 ? (
                       <div className="text-center py-4 text-gray-500">
-                        {isThai ? 'ยังไม่มีออเดอร์' : 'No orders yet'}
+                        ยังไม่มีออเดอร์
                       </div>
                     ) : (
                       table.orders.map((order) => (
@@ -506,7 +504,7 @@ function ActiveTablesView() {
                           <div className="flex justify-between items-start mb-2">
                             <div className="flex-1">
                               <p className="text-sm text-gray-400">
-                                {isThai ? 'ออเดอร์' : 'Order'} #{String(order._id).slice(-6)}
+                                ออเดอร์ #{String(order._id).slice(-6)}
                               </p>
                               <p className="text-xs text-gray-500 mt-1">
                                 {new Date(order.createdAt).toLocaleTimeString('th-TH', { timeZone: 'Asia/Bangkok' })}
@@ -523,7 +521,7 @@ function ActiveTablesView() {
                                 className="flex justify-between text-sm"
                               >
                                 <span className="text-gray-300">
-                                  {item.quantity}x {isThai ? (item.nameThai || item.nameEnglish) : (item.nameEnglish || item.nameThai)}
+                                  {item.quantity}x {item.nameThai || item.nameEnglish}
                                 </span>
                                 {item.price > 0 && (
                                   <span className="text-gray-400">฿{item.price * item.quantity}</span>
@@ -535,7 +533,7 @@ function ActiveTablesView() {
                           {/* Special Notes */}
                           {order.specialNotes && (
                             <div className="mt-3 pt-3 border-t border-gray-700">
-                              <p className="text-xs text-gray-500">{isThai ? 'หมายเหตุ' : 'Notes'}:</p>
+                              <p className="text-xs text-gray-500">หมายเหตุ:</p>
                               <p className="text-sm text-gray-400">{order.specialNotes}</p>
                             </div>
                           )}
@@ -551,7 +549,7 @@ function ActiveTablesView() {
                 <div className="mt-4 bg-yellow-900/30 border border-yellow-500 rounded-lg p-3 flex items-center">
                   <AlertCircle className="w-5 h-5 text-yellow-400 mr-2" />
                   <p className="text-sm text-yellow-400 font-semibold">
-                    {isThai ? 'ใกล้หมดเวลา! กรุณาเตรียมปิดโต๊ะ' : 'Time running out! Please prepare to close table'}
+                    ใกล้หมดเวลา! กรุณาเตรียมปิดโต๊ะ
                   </p>
                 </div>
               )}
@@ -561,7 +559,7 @@ function ActiveTablesView() {
                 <div className="mt-4 bg-red-900/30 border border-red-500 rounded-lg p-3 flex items-center">
                   <AlertCircle className="w-5 h-5 text-red-400 mr-2" />
                   <p className="text-sm text-red-400 font-semibold">
-                    {isThai ? 'เกินเวลา! กรุณาปิดโต๊ะโดยเร็ว' : 'Overtime! Please close table immediately'}
+                    เกินเวลา! กรุณาปิดโต๊ะโดยเร็ว
                   </p>
                 </div>
               )}
@@ -572,8 +570,8 @@ function ActiveTablesView() {
 
       {/* Linked List Info */}
       <div className="mt-8 text-center text-gray-500 text-sm">
-        <p>{isThai ? 'ใช้ Doubly Linked List เรียงตามเวลาที่เหลือ (น้อย → มาก)' : 'Using Doubly Linked List sorted by Time Remaining (Low → High)'}</p>
-        <p>{isThai ? 'ขนาดรายการ' : 'List Size'}: {tablesLinkedListRef.current.size} {isThai ? 'โหนด' : 'nodes'}</p>
+        <p>ใช้ Doubly Linked List เรียงตามเวลาที่เหลือ (น้อย → มาก)</p>
+        <p>ขนาดรายการ: {tablesLinkedListRef.current.size} โหนด</p>
       </div>
     </div>
   );

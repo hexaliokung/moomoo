@@ -1,6 +1,5 @@
 import React from "react";
 import { Clock } from 'lucide-react';
-import { useBilingual } from '../../hook/useBilingual';
 
 /**
  * OrderCard Component - Display order details
@@ -9,7 +8,6 @@ import { useBilingual } from '../../hook/useBilingual';
  * @param {Boolean} props.isFirst - Is this the first order in queue
  */
 export default function OrderCard({ order, isFirst }) {
-  const { isThai } = useBilingual();
 
   // Queue type styling
   const isNormalQueue = order.queueType === 'Normal';
@@ -33,8 +31,8 @@ export default function OrderCard({ order, isFirst }) {
   const minutesAgo = Math.max(0, Math.floor((nowInThailand - orderTimeMs) / 60000));
   
   const timeAgoText = minutesAgo < 1 
-    ? (isThai ? 'เมื่อกี้' : 'Just now')
-    : (isThai ? `${minutesAgo} นาทีก่อน` : `${minutesAgo}m ago`);
+    ? 'เมื่อกี้'
+    : `${minutesAgo} นาทีก่อน`;
 
   return (
     <div className={`rounded-xl p-5 border-2 ${borderHighlight} transition-all`}>
@@ -47,7 +45,7 @@ export default function OrderCard({ order, isFirst }) {
             </span>
           )}
           <span className="text-base md:text-lg font-bold text-white">
-            🪑 {isThai ? 'โต๊ะ' : 'Table'} {order.tableNumber}
+            🪑 โต๊ะ {order.tableNumber}
           </span>
         </div>
         <div className="flex items-center gap-1 text-gray-400 text-xs md:text-sm">

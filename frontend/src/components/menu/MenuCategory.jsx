@@ -1,6 +1,5 @@
 import React from 'react';
 import MenuItemCard from './MenuItemCard';
-import { useBilingual } from '@/hook/useBilingual';
 
 /**
  * MenuCategory - Display menu items grouped by category
@@ -11,8 +10,6 @@ import { useBilingual } from '@/hook/useBilingual';
  * @param {Function} onRemoveFromCart - Remove item from cart callback
  */
 const MenuCategory = ({ category, items, cart = {}, onAddToCart, onRemoveFromCart }) => {
-  const { t, isThai } = useBilingual();
-
   if (!items || items.length === 0) {
     return null;
   }
@@ -21,11 +18,11 @@ const MenuCategory = ({ category, items, cart = {}, onAddToCart, onRemoveFromCar
   const getCategoryName = () => {
     switch (category) {
       case 'Starter Buffet':
-        return isThai ? 'บุฟเฟ่ต์ปกติ' : 'Starter Buffet';
+        return 'บุฟเฟ่ต์ปกติ';
       case 'Premium Buffet':
-        return isThai ? 'บุฟเฟ่ต์พรีเมียม' : 'Premium Buffet';
+        return 'บุฟเฟ่ต์พรีเมียม';
       case 'Special Menu':
-        return isThai ? 'เมนูพิเศษ' : 'Special Menu';
+        return 'เมนูพิเศษ';
       default:
         return category;
     }
@@ -35,17 +32,11 @@ const MenuCategory = ({ category, items, cart = {}, onAddToCart, onRemoveFromCar
   const getCategoryDescription = () => {
     switch (category) {
       case 'Starter Buffet':
-        return isThai
-          ? 'รายการอาหารในบุฟเฟ่ต์ปกติ (259 บาท/ท่าน)'
-          : 'Included in Starter Buffet (฿259/person)';
+        return 'รายการอาหารในบุฟเฟ่ต์ปกติ (259 บาท/ท่าน)';
       case 'Premium Buffet':
-        return isThai
-          ? 'รายการอาหารในบุฟเฟ่ต์พรีเมียม (299 บาท/ท่าน)'
-          : 'Included in Premium Buffet (฿299/person)';
+        return 'รายการอาหารในบุฟเฟ่ต์พรีเมียม (299 บาท/ท่าน)';
       case 'Special Menu':
-        return isThai
-          ? 'เมนูพิเศษ - คิดค่าอาหารแยกจากบุฟเฟ่ต์'
-          : 'Special Menu - Charged separately';
+        return 'เมนูพิเศษ - คิดค่าอาหารแยกจากบุฟเฟ่ต์';
       default:
         return '';
     }
@@ -76,7 +67,7 @@ const MenuCategory = ({ category, items, cart = {}, onAddToCart, onRemoveFromCar
 
       {/* Category Summary */}
       <div className="mt-4 text-sm text-gray-500 text-right">
-        {items.length} {isThai ? 'รายการ' : 'items'}
+        {items.length} รายการ
       </div>
     </div>
   );

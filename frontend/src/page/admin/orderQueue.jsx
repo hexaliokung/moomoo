@@ -3,10 +3,8 @@ import { ShoppingCart, Clock, AlertCircle, RefreshCw, CheckCircle, Send, ChefHat
 import OrderList from "../../components/order/OrderList";
 import { useOrderQueue } from "../../hook/useOrderQueue";
 import orderService from "../../services/orderService";
-import { useBilingual } from '../../hook/useBilingual';
 
 export default function OrderQueue() {
-  const { isThai } = useBilingual();
   const { normalQueue, specialQueue, loading, error, refetch } = useOrderQueue(3000); // 3s polling
   const [servingOrder, setServingOrder] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
@@ -30,11 +28,7 @@ export default function OrderQueue() {
       
       // Show success message
       const tableNum = firstOrder.tableNumber;
-      setSuccessMessage(
-        isThai 
-          ? `✅ ส่งเมนูโต๊ะ ${tableNum} เรียบร้อย!` 
-          : `✅ Served to Table ${tableNum}!`
-      );
+      setSuccessMessage(`✅ ส่งเมนูโต๊ะ ${tableNum} เรียบร้อย!`);
       setTimeout(() => setSuccessMessage(null), 3000);
       
       // Refetch queues to update UI
@@ -55,7 +49,7 @@ export default function OrderQueue() {
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-white text-lg">
-            {isThai ? 'กำลังโหลดคิวออเดอร์...' : 'Loading order queues...'}
+            กำลังโหลดคิวออเดอร์...
           </p>
         </div>
       </div>
@@ -73,10 +67,10 @@ export default function OrderQueue() {
             </div>
             <div>
               <h1 className="text-2xl md:text-3xl font-bold text-white">
-                {isThai ? '🍳 คิวออเดอร์ครัว' : '🍳 Kitchen Queue'}
+                🍳 คิวออเดอร์ครัว
               </h1>
               <p className="text-gray-400 text-sm">
-                {isThai ? 'กดส่งเมนูเมื่อทำเสร็จ' : 'Press serve when ready'}
+                กดส่งเมนูเมื่อทำเสร็จ
               </p>
             </div>
           </div>
@@ -95,7 +89,7 @@ export default function OrderQueue() {
             <button
               onClick={refetch}
               className="p-2.5 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
-              title={isThai ? 'รีเฟรช' : 'Refresh'}
+              title="รีเฟรช"
             >
               <RefreshCw className="w-5 h-5" />
             </button>
@@ -108,19 +102,19 @@ export default function OrderQueue() {
         <div className="bg-gray-800/60 border border-gray-700 rounded-xl p-3 md:p-4 text-center">
           <div className="text-3xl md:text-4xl font-bold text-white mb-1">{totalCount}</div>
           <div className="text-xs md:text-sm text-gray-400">
-            {isThai ? 'ออเดอร์ทั้งหมด' : 'Total'}
+            ออเดอร์ทั้งหมด
           </div>
         </div>
         <div className="bg-blue-900/30 border border-blue-600/30 rounded-xl p-3 md:p-4 text-center">
           <div className="text-3xl md:text-4xl font-bold text-blue-400 mb-1">{normalQueue.length}</div>
           <div className="text-xs md:text-sm text-blue-300">
-            {isThai ? 'คิวปกติ' : 'Normal'}
+            คิวปกติ
           </div>
         </div>
         <div className="bg-purple-900/30 border border-purple-600/30 rounded-xl p-3 md:p-4 text-center">
           <div className="text-3xl md:text-4xl font-bold text-purple-400 mb-1">{specialQueue.length}</div>
           <div className="text-xs md:text-sm text-purple-300">
-            {isThai ? 'คิวพิเศษ' : 'Special'}
+            คิวพิเศษ
           </div>
         </div>
       </div>

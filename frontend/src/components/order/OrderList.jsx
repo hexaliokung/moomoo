@@ -1,7 +1,6 @@
 import React from "react";
 import { Send, Loader2 } from "lucide-react";
 import OrderCard from "./OrderCard";
-import { useBilingual } from '../../hook/useBilingual';
 
 /**
  * OrderList Component - Display list of orders for a specific queue
@@ -12,7 +11,6 @@ import { useBilingual } from '../../hook/useBilingual';
  * @param {Boolean} props.isServing - Is currently serving
  */
 export default function OrderList({ queueType, orders, onServeFirst, isServing }) {
-  const { isThai } = useBilingual();
 
   const isNormalQueue = queueType === 'Normal';
   const headerBg = isNormalQueue ? 'bg-blue-600' : 'bg-purple-600';
@@ -23,12 +21,12 @@ export default function OrderList({ queueType, orders, onServeFirst, isServing }
     : 'bg-purple-500 hover:bg-purple-400 active:bg-purple-600';
 
   const title = isNormalQueue
-    ? (isThai ? '🍖 คิวบุฟเฟ่ต์' : '🍖 Buffet Queue')
-    : (isThai ? '🍣 คิวพิเศษ' : '🍣 Special Queue');
+    ? '🍖 คิวบุฟเฟ่ต์'
+    : '🍣 คิวพิเศษ';
 
   const emptyMessage = isNormalQueue
-    ? (isThai ? 'ไม่มีออเดอร์บุฟเฟ่ต์' : 'No buffet orders')
-    : (isThai ? 'ไม่มีออเดอร์พิเศษ' : 'No special orders');
+    ? 'ไม่มีออเดอร์บุฟเฟ่ต์'
+    : 'ไม่มีออเดอร์พิเศษ';
 
   const firstOrder = orders[0];
 
@@ -55,16 +53,13 @@ export default function OrderList({ queueType, orders, onServeFirst, isServing }
             {isServing ? (
               <>
                 <Loader2 className="w-6 h-6 animate-spin" />
-                <span>{isThai ? 'กำลังส่ง...' : 'Serving...'}</span>
+                <span>กำลังส่ง...</span>
               </>
             ) : (
               <>
                 <Send className="w-6 h-6" />
                 <span>
-                  {isThai 
-                    ? `ส่งเมนู โต๊ะ ${firstOrder.tableNumber}` 
-                    : `Serve Table ${firstOrder.tableNumber}`
-                  }
+                  ส่งเมนู โต๊ะ {firstOrder.tableNumber}
                 </span>
               </>
             )}

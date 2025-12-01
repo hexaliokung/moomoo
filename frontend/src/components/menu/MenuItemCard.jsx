@@ -1,6 +1,5 @@
 import React from "react";
 import { Plus, Minus } from "lucide-react";
-import { useBilingual } from "@/hook/useBilingual";
 
 /**
  * MenuItemCard - Display individual menu item
@@ -20,15 +19,12 @@ const MenuItemCard = ({
   onRemove,
   category, // ถ้า parent ส่ง category มา จะใช้ค่านี้ก่อน
 }) => {
-  const { isThai } = useBilingual();
-
   // ใช้ name เดียวแล้ว ไม่แยกไทย/อังกฤษ
   const displayName = item.name;
   const displayDescription = item.description || "";
 
   // category สำหรับ badge (พยายามรองรับทั้งของใหม่/เก่า)
-  const displayCategory =
-    category || item.category || (isThai ? "เมนู" : "Menu");
+  const displayCategory = category || item.category || "เมนู";
 
   // ถ้าไม่มีฟิลด์ availability ให้ถือว่า Available
   const isAvailable =
@@ -88,7 +84,7 @@ const MenuItemCard = ({
           <div className="flex flex-col">
             {isFree ? (
               <span className="text-lg font-bold text-green-600">
-                {isThai ? "ฟรี" : "Free"}
+                ฟรี
               </span>
             ) : (
               <span className="text-lg font-bold text-red-600">
@@ -124,7 +120,7 @@ const MenuItemCard = ({
             </div>
           ) : (
             <span className="text-sm font-semibold text-gray-500">
-              {isThai ? "หมด" : "Out of Stock"}
+              หมด
             </span>
           )}
         </div>

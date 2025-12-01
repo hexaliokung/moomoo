@@ -1,5 +1,4 @@
 import React from 'react';
-import { useBilingual } from '../../hook/useBilingual';
 
 /**
  * BillPrint Component - Printable bill format
@@ -7,8 +6,6 @@ import { useBilingual } from '../../hook/useBilingual';
  * @param {Object} props.printData - Printable bill data from API
  */
 export const BillPrint = ({ printData }) => {
-  const { isThai } = useBilingual();
-
   if (!printData || !printData.bill) {
     return null;
   }
@@ -25,19 +22,19 @@ export const BillPrint = ({ printData }) => {
         <p className="text-sm text-gray-600 mt-1">{restaurant.address}</p>
         <p className="text-sm text-gray-600">{restaurant.phone}</p>
         <p className="text-xs text-gray-500 mt-1">
-          {isThai ? 'เลขประจำตัวผู้เสียภาษี' : 'Tax ID'}: {restaurant.taxId}
+          เลขประจำตัวผู้เสียภาษี: {restaurant.taxId}
         </p>
       </div>
 
       {/* Bill Info */}
       <div className="mb-4">
         <div className="flex justify-between text-sm mb-1">
-          <span className="font-semibold">{isThai ? 'โต๊ะ' : 'Table'}:</span>
+          <span className="font-semibold">โต๊ะ:</span>
           <span>{bill.tableNumber}</span>
         </div>
         <div className="flex justify-between text-sm">
-          <span className="font-semibold">{isThai ? 'วันที่' : 'Date'}:</span>
-          <span>{new Date(bill.date).toLocaleString(isThai ? 'th-TH' : 'en-US')}</span>
+          <span className="font-semibold">วันที่:</span>
+          <span>{new Date(bill.date).toLocaleString('th-TH')}</span>
         </div>
       </div>
 
@@ -46,8 +43,8 @@ export const BillPrint = ({ printData }) => {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-gray-300">
-              <th className="text-left pb-2">{isThai ? 'รายการ' : 'Item'}</th>
-              <th className="text-right pb-2">{isThai ? 'จำนวนเงิน' : 'Amount'}</th>
+              <th className="text-left pb-2">รายการ</th>
+              <th className="text-right pb-2">จำนวนเงิน</th>
             </tr>
           </thead>
           <tbody>
@@ -64,7 +61,7 @@ export const BillPrint = ({ printData }) => {
       {/* Totals */}
       <div className="border-t-2 border-gray-800 pt-3 space-y-2">
         <div className="flex justify-between text-sm">
-          <span>{isThai ? 'ยอดก่อน VAT' : 'Subtotal'}:</span>
+          <span>ยอดก่อน VAT:</span>
           <span>{bill.subtotal.toFixed(2)}฿</span>
         </div>
         
@@ -74,7 +71,7 @@ export const BillPrint = ({ printData }) => {
         </div>
 
         <div className="flex justify-between text-lg font-bold border-t border-gray-400 pt-2">
-          <span>{isThai ? 'รวมทั้งสิ้น' : 'TOTAL'}:</span>
+          <span>รวมทั้งสิ้น:</span>
           <span>{bill.total.toFixed(2)}฿</span>
         </div>
       </div>
@@ -83,7 +80,7 @@ export const BillPrint = ({ printData }) => {
       {bill.paymentMethod !== 'Unpaid' && (
         <div className="mt-4 text-center">
           <p className="text-sm text-gray-600">
-            {isThai ? 'ชำระด้วย' : 'Paid by'}: <span className="font-semibold">{bill.paymentMethod}</span>
+            ชำระด้วย: <span className="font-semibold">{bill.paymentMethod}</span>
           </p>
         </div>
       )}
@@ -91,10 +88,10 @@ export const BillPrint = ({ printData }) => {
       {/* Footer */}
       <div className="text-center mt-6 pt-4 border-t border-gray-300">
         <p className="text-sm text-gray-600">
-          {isThai ? 'ขอบคุณที่ใช้บริการ' : 'Thank you for dining with us'}
+          ขอบคุณที่ใช้บริการ
         </p>
         <p className="text-xs text-gray-500 mt-1">
-          {isThai ? 'โปรดเก็บใบเสร็จไว้เป็นหลักฐาน' : 'Please keep this receipt'}
+          โปรดเก็บใบเสร็จไว้เป็นหลักฐาน
         </p>
       </div>
 

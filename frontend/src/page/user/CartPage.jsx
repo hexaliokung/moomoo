@@ -3,14 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { ShoppingCart, Trash2, Loader2, Send } from 'lucide-react';
 import orderService from '@/services/orderService';
 import menuService from '@/services/menuService';
-import { useBilingual } from '@/hook/useBilingual';
 
 /**
  * CartPage - Review cart and submit order
  */
 function CartPage() {
   const navigate = useNavigate();
-  const { t, isThai } = useBilingual();
   
   const [cart, setCart] = useState({});
   const [menuItems, setMenuItems] = useState([]);
@@ -26,7 +24,7 @@ function CartPage() {
         // Get table number
         const storedTableNumber = localStorage.getItem('tableNumber');
         if (!storedTableNumber) {
-          alert(isThai ? 'กรุณาระบุหมายเลขโต๊ะ' : 'Please enter table number');
+          alert('กรุณาระบุหมายเลขโต๊ะ');
           navigate('/');
           return;
         }
@@ -48,7 +46,7 @@ function CartPage() {
       }
     };
     loadData();
-  }, [navigate, isThai]);
+  }, [navigate]);
 
   // Get cart items with menu data
   const getCartItems = () => {
@@ -83,7 +81,7 @@ function CartPage() {
   const handleSubmitOrder = async () => {
     const cartItems = getCartItems();
     if (cartItems.length === 0) {
-      alert(isThai ? 'ตะกร้าว่างเปล่า' : 'Cart is empty');
+      alert('ตะกร้าว่างเปล่า');
       return;
     }
 
@@ -104,15 +102,11 @@ function CartPage() {
       setCart({});
       
       // Show success
-      alert(
-        isThai
-          ? `สั่งอาหารสำเร็จ! ออเดอร์ของคุณอยู่ใน ${response.data.queueType} queue`
-          : `Order placed successfully! Your order is in the ${response.data.queueType} queue`
-      );
+      alert(`สั่งอาหารสำเร็จ! ออเดอร์ของคุณอยู่ในคิว ${response.data.queueType}`);
       navigate('/');
     } catch (error) {
       console.error('Failed to submit order:', error);
-      alert(error.message || (isThai ? 'ไม่สามารถสั่งอาหารได้' : 'Failed to place order'));
+      alert(error.message || 'ไม่สามารถสั่งอาหารได้');
     } finally {
       setSubmitting(false);
     }
@@ -137,10 +131,10 @@ function CartPage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-800">
-                {isThai ? 'ตะกร้า' : 'Cart'}
+                ตะกร้า
               </h1>
               <p className="text-sm text-gray-600">
-                {isThai ? 'โต๊ะที่' : 'Table'} {tableNumber}
+                โต๊ะที่ {tableNumber}
               </p>
             </div>
             <ShoppingCart className="w-8 h-8 text-red-600" />
@@ -154,16 +148,16 @@ function CartPage() {
           <div className="text-center py-16">
             <ShoppingCart className="w-24 h-24 text-gray-300 mx-auto mb-4" />
             <h2 className="text-xl font-bold text-gray-800 mb-2">
-              {isThai ? 'ตะกร้าว่างเปล่า' : 'Your cart is empty'}
+              ตะกร้าว่างเปล่า
             </h2>
             <p className="text-gray-600 mb-6">
-              {isThai ? 'เพิ่มรายการอาหารจากเมนู' : 'Add items from the menu'}
+              เพิ่มรายการอาหารจากเมนู
             </p>
             <button
               onClick={() => navigate('/menu')}
               className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold transition-all"
             >
-              {isThai ? 'ดูเมนู' : 'View Menu'}
+              ดูเมนู
             </button>
           </div>
         ) : (
@@ -177,7 +171,7 @@ function CartPage() {
                 >
                   <div className="flex-1">
                     <h3 className="font-semibold text-gray-800">
-                      {isThai ? menuItem.nameThai : menuItem.nameEnglish}
+                      {menuItem.nameThai || menuItem.nameEnglish}
                     </h3>
                     <p className="text-sm text-gray-600">{menuItem.category}</p>
                     <p className="text-red-600 font-bold mt-1">
@@ -212,12 +206,12 @@ function CartPage() {
             {/* Notes */}
             <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
               <label className="block text-sm font-semibold text-gray-800 mb-2">
-                {isThai ? 'หมายเหตุ (ถ้ามี)' : 'Notes (optional)'}
+                หมายเหตุ (ถ้ามี)
               </label>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder={isThai ? 'เช่น ไม่ใส่ผักชี' : 'e.g. No cilantro'}
+                placeholder="เช่น ไม่ใส่ผักชี"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-red-600"
                 rows="3"
               />
@@ -226,12 +220,12 @@ function CartPage() {
             {/* Total */}
             <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
               <div className="flex justify-between items-center text-xl font-bold">
-                <span className="text-gray-800">{isThai ? 'รวมทั้งหมด' : 'Total'}</span>
+                <span className="text-gray-800">รวมทั้งหมด</span>
                 <span className="text-red-600">฿{total}</span>
               </div>
               {total === 0 && (
                 <p className="text-sm text-gray-600 mt-2">
-                  {isThai ? '(รายการบุฟเฟ่ต์ฟรี)' : '(Buffet items are free)'}
+                  (รายการบุฟเฟ่ต์ฟรี)
                 </p>
               )}
             </div>
@@ -245,12 +239,12 @@ function CartPage() {
               {submitting ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>{isThai ? 'กำลังส่ง...' : 'Submitting...'}</span>
+                  <span>กำลังส่ง...</span>
                 </>
               ) : (
                 <>
                   <Send size={20} />
-                  <span>{isThai ? 'ส่งออเดอร์' : 'Submit Order'}</span>
+                  <span>ส่งออเดอร์</span>
                 </>
               )}
             </button>

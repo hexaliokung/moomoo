@@ -5,10 +5,8 @@ import BillSummary from '../../components/bill/BillSummary';
 import BillPrint from '../../components/bill/BillPrint';
 import billService from '../../services/billService';
 import tableService from '../../services/tableService';
-import { useBilingual } from '../../hook/useBilingual';
 
 function BillingManagement() {
-  const { isThai } = useBilingual();
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState('active'); // 'active' or 'history'
   const [tables, setTables] = useState([]);
@@ -101,14 +99,14 @@ function BillingManagement() {
       
       // Check if bill exists
       if (!response.data) {
-        alert(isThai ? 'ไม่พบบิลสำหรับโต๊ะนี้' : 'No bill found for this table');
+        alert('ไม่พบบิลสำหรับโต๊ะนี้');
         return;
       }
       
       setSelectedBill(response.data);
       setShowBillDialog(true);
     } catch (error) {
-      alert(isThai ? 'เกิดข้อผิดพลาด: ' + error.message : 'Error: ' + error.message);
+      alert('เกิดข้อผิดพลาด: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -131,7 +129,7 @@ function BillingManagement() {
         window.print();
       }, 500);
     } catch (error) {
-      alert(isThai ? 'เกิดข้อผิดพลาด: ' + error.message : 'Error: ' + error.message);
+      alert('เกิดข้อผิดพลาด: ' + error.message);
     } finally {
       setLoading(false);
     }
