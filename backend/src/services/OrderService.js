@@ -78,7 +78,7 @@ class OrderService {
       createdOrders.push(specialOrder);
 
       // เพิ่มเมนู Special ลงบิลเพื่อคิดเงินตอนปิดโต๊ะ
-      const activeBill = Bill.findActiveByTable(tableNumber);
+      const activeBill = Bill.getActiveByTable(tableNumber);
       if (activeBill) {
         for (const item of specialItems) {
           Bill.addSpecialItem(activeBill._id, {

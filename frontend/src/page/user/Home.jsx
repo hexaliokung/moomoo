@@ -335,14 +335,14 @@ function Home() {
                   เข้าสู่ระบบ
                 </button>
               </div>
-              <p className="text-gray-400 text-sm mt-4 text-center">
-                <div>
+              <div className="text-gray-400 text-sm mt-4 text-center">
+                <p>
                   หากไม่ได้รับรหัสผ่าน 4 หลัก สามารถขอได้จากพนักงาน
-                </div>
-                <div>
+                </p>
+                <p>
                   ขออภัยล่วงหน้าในความไม่สะดวก
-                </div>
-              </p>
+                </p>
+              </div>
             </div>
           </div>
         </div>

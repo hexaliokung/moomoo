@@ -1,5 +1,6 @@
 import Table from "../models/Table.js";
 import BillingService from "./BillingService.js";
+import Order from "../models/Order.js";
 import CryptoJS from "crypto-js";
 
 // Encryption utilities
@@ -72,7 +73,7 @@ class TableService {
     });
 
     // Create bill for the table
-    const bill = await BillingService.createBillForTable(
+    const bill = await BillingService.create(
       tableNumber,
       customerCount,
       buffetTier,
@@ -181,13 +182,27 @@ class TableService {
     // Archive the bill (only if it exists and not already archived)
     if (archivedBillId) {
       try {
-        await BillingService.archiveBill(archivedBillId);
+        await BillingService.archive(archivedBillId);
       } catch (error) {
         // If bill is already archived, ignore the error and continue
         if (!error.message.includes("already archived")) {
           throw error;
         }
       }
+    }
+
+    // Delete all orders for this table (reset order history)
+    let deletedOrdersCount = 0;
+    try {
+      deletedOrdersCount = Order.deleteByTable(tableNumber);
+      console.log(
+        `✅ Deleted ${deletedOrdersCount} orders for table ${tableNumber}`
+      );
+    } catch (orderDeleteError) {
+      console.error(
+        `❌ Failed to delete orders for table ${tableNumber}:`,
+        orderDeleteError.message
+      );
     }
 
     // Reset table to Available status immediately (ready for next customer)
@@ -210,7 +225,8 @@ class TableService {
       table: updatedTable,
       archivedBillId,
       sessionHistory,
-      message: `Table ${tableNumber} is now available for next customer. Session history saved.`,
+      deletedOrdersCount,
+      message: `Table ${tableNumber} is now available for next customer. Session history saved. ${deletedOrdersCount} orders deleted.`,
     };
   }
 
